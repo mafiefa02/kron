@@ -1,25 +1,27 @@
+import { db, Profiles } from "@shared/lib/db";
 import type { Selectable } from "kysely";
 import { useEffect, useState } from "react";
-import { db } from "../lib/db";
-import { Profiles } from "../lib/db/types";
 
-export const App = () => {
+export const Home = () => {
   const [data, setData] = useState<Selectable<Profiles>[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
         const response = await db.selectFrom("profiles").selectAll().execute();
         setData(response);
-      } catch (error) {
-        console.error("Failed to fetch profiles", error);
+      } catch (e) {
+        const error = e as Error;
+        setError(error.message);
+        console.error("Failed to fetch profiles", error.message);
       }
     };
 
     fetchProfiles();
   }, []);
 
-  if (!data) return <p>Loading...</p>;
+  if (error !== null) return <p>{error}</p>;
 
   return <p>{JSON.stringify(data)}</p>;
 };

@@ -1,6 +1,10 @@
+import { appDataDir } from "@tauri-apps/api/path";
+import Database from "@tauri-apps/plugin-sql";
+import { Kysely } from "kysely";
 import type { ColumnType } from "kysely";
+import { TauriSqliteDialect } from "kysely-dialect-tauri";
 
-export type Generated<T> =
+type Generated<T> =
   T extends ColumnType<infer S, infer I, infer U>
     ? ColumnType<S, I | undefined, U>
     : ColumnType<T, T | undefined, T>;
@@ -24,7 +28,7 @@ export interface ProfilesExtensions {
   created_at: Generated<Date>;
   updated_at: Date | null;
   settings: string | null;
-  is_enabled: Boolean;
+  is_enabled: boolean;
 }
 
 export interface Schedules {
@@ -35,7 +39,7 @@ export interface Schedules {
   time: number;
   created_at: Generated<Date>;
   updated_at: Date | null;
-  is_active: Boolean;
+  is_active: boolean;
 }
 
 export interface ScheduleDays {
@@ -62,3 +66,10 @@ export interface DatabaseTables {
   scheduleDays: ScheduleDays;
   scheduleOverrides: ScheduleOverrides;
 }
+
+export const db = new Kysely<DatabaseTables>({
+  dialect: new TauriSqliteDialect({
+    database: async (prefix) =>
+      Database.load(`${prefix}${await appDataDir()}/kron.db`),
+  }),
+});

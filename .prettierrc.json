@@ -1,7 +1,6 @@
 {
-  "semi": true,
   "singleAttributePerLine": true,
-  "tailwindStylesheet": "./src/lib/styles.css",
+  "tailwindStylesheet": "./src/shared/lib/styles.css",
   "tailwindAttributes": ["class", "className"],
   "tailwindFunctions": ["cn", "clsx", "twMerge", "cva"],
   "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"],

@@ -7,7 +7,7 @@ pub fn run() {
     let migrations = vec![Migration {
         version: 1,
         description: "initial_schema",
-        sql: include_str!("../../db/migrations/0001_initial_schema.sql"),
+        sql: include_str!("../db/migrations/0001_initial_schema.sql"),
         kind: tauri_plugin_sql::MigrationKind::Up,
     }];
 
