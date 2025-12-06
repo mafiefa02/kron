@@ -21,7 +21,7 @@ const SidebarItem = ({ label, to, icon }: SidebarItemProps) => {
     <Link to={to}>
       <Button
         className="w-full justify-start"
-        variant={isActive ? "secondary" : "ghost"}
+        variant={isActive ? "outline" : "ghost"}
       >
         {icon}
         <p>{label}</p>

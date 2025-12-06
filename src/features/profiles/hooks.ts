@@ -7,7 +7,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { createProfileSchema } from "./schemas";
 
-export const useCreateProfile = () => {
+const useMutateProfile = () => {
   const navigate = useNavigate();
   const { timeZone: timezone } = Intl.DateTimeFormat().resolvedOptions();
   return useMutation({
@@ -28,7 +28,7 @@ export const useCreateProfile = () => {
 
 export const useCreateProfileForm = () => {
   const { errors, validateForm } = useValidateForm(createProfileSchema);
-  const mutation = useCreateProfile();
+  const mutation = useMutateProfile();
 
   const handleSubmit = useCallback(
     (values: FormPrimitive.Values) => {
