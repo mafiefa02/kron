@@ -1,7 +1,7 @@
 import { UnlistenFn } from "@tauri-apps/api/event";
 import { load, Store } from "@tauri-apps/plugin-store";
 
-class TypedStore<T extends object> {
+export class TypedStore<T extends object> {
   private store: Store;
 
   constructor(store: Store) {
@@ -52,9 +52,5 @@ class TypedStore<T extends object> {
   }
 }
 
-interface AppSettings {
-  active_profile: number;
-}
-
 const config = await load("config.json");
-export const store = new TypedStore<AppSettings>(config);
+export const stores = { config };

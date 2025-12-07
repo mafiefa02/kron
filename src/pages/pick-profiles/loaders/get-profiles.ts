@@ -1,7 +1,5 @@
-import { db } from "@shared/lib/db";
+import { repositories } from "@shared/lib/repositories";
 
 export type GetProfiles = typeof getProfiles;
-export const getProfiles = async () => {
-  const query = db.selectFrom("profiles").selectAll();
-  return query.execute();
-};
+export const getProfiles = async () =>
+  await repositories.profile.findAll.execute();

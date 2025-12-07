@@ -2,7 +2,6 @@ import { Input, type InputProps } from "@shared/components/ui/input";
 import { Textarea, type TextareaProps } from "@shared/components/ui/textarea";
 import { cn } from "@shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import type * as React from "react";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (

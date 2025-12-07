@@ -1,7 +1,6 @@
 import { Field as FieldPrimitive } from "@base-ui-components/react/field";
 import { mergeProps } from "@base-ui-components/react/merge-props";
 import { cn } from "@shared/lib/utils";
-import type * as React from "react";
 
 type TextareaProps = React.ComponentProps<"textarea"> & {
   size?: "sm" | "default" | "lg" | number;

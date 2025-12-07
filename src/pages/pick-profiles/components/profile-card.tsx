@@ -1,7 +1,8 @@
 import { Button, ButtonProps } from "@shared/components/ui/button";
 import { Profiles } from "@shared/lib/db";
-import { store } from "@shared/lib/store";
+import { services } from "@shared/lib/services";
 import { cn } from "@shared/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { Selectable } from "kysely";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
@@ -16,10 +17,14 @@ export const ProfileCard = ({
   ...props
 }: ProfileCardProps) => {
   const navigate = useNavigate();
+  const { mutate: setProfileConfig } = useMutation(
+    services.config.set("active_profile"),
+  );
+
   const handleSelect = useCallback(() => {
-    store.set("active_profile", profile.id);
+    setProfileConfig(profile.id);
     navigate("/");
-  }, [navigate, profile.id]);
+  }, [navigate, profile.id, setProfileConfig]);
 
   return (
     <Button

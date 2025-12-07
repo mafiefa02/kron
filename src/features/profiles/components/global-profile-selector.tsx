@@ -7,9 +7,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@shared/components/ui/select";
-import { db, store } from "@shared/lib";
+import { Skeleton } from "@shared/components/ui/skeleton";
+import { repositories } from "@shared/lib/repositories";
+import { services } from "@shared/lib/services";
 import { useMutation, useQueries } from "@tanstack/react-query";
+import { InferResult } from "kysely";
 import { useCallback } from "react";
+
+const LoadingState = () => <Skeleton className="h-8 w-full max-w-32" />;
 
 export const GlobalProfileSelector = () => {
   const [
@@ -28,25 +33,17 @@ export const GlobalProfileSelector = () => {
   ] = useQueries({
     queries: [
       {
-        queryKey: ["profiles"],
-        queryFn: async () => {
-          const query = db
-            .selectFrom("profiles")
-            .select(["name as label", "id as value"]);
-          const result = await query.execute();
-          return result;
-        },
+        ...services.profile.query.getProfiles,
+        select: (data: InferResult<typeof repositories.profile.findAll>) =>
+          data.map((profile) => ({ label: profile.name, value: profile.id })),
       },
-      {
-        queryKey: ["current-active-profile"],
-        queryFn: async () => await store.get("active_profile"),
-      },
+      services.config.get("active_profile"),
     ],
   });
 
-  const { mutate: changeProfile } = useMutation({
-    mutationFn: async (value: number) => store.set("active_profile", value),
-  });
+  const { mutate: changeProfile } = useMutation(
+    services.config.set("active_profile"),
+  );
 
   const handleChange = useCallback(
     (value: number | null) => {
@@ -55,7 +52,7 @@ export const GlobalProfileSelector = () => {
     [changeProfile],
   );
 
-  if (isProfilePending || isCurrentPending) return <p>Loading...</p>;
+  if (isProfilePending || isCurrentPending) return <LoadingState />;
 
   if (isProfileError) return <p>{profileError.message}</p>;
   if (isCurrentError) return <p>{currentError.message}</p>;

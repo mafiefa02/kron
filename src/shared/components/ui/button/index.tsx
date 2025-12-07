@@ -2,7 +2,6 @@ import { mergeProps } from "@base-ui-components/react/merge-props";
 import { useRender } from "@base-ui-components/react/use-render";
 import { cn } from "@shared/lib/utils";
 import type { VariantProps } from "class-variance-authority";
-import type * as React from "react";
 import { buttonVariants } from "./variants";
 
 interface ButtonProps extends useRender.ComponentProps<"button"> {

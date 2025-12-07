@@ -1,5 +1,5 @@
 import { db } from "@shared/lib/db";
-import { store } from "@shared/lib/store";
+import { stores } from "@shared/lib/stores";
 import { LoaderFunction, redirect } from "react-router";
 
 export const profileCheckLoader: LoaderFunction = async ({ request }) => {
@@ -7,7 +7,9 @@ export const profileCheckLoader: LoaderFunction = async ({ request }) => {
   if (url.pathname === "/pick-profiles" || url.pathname === "/onboarding")
     return null;
 
-  const currentProfileId = await store.get("active_profile");
+  const currentProfileId = (await stores.config.get(
+    "active_profile",
+  )) as number;
 
   if (currentProfileId) {
     // check if current profile exists in db
