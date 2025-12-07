@@ -12,6 +12,7 @@ import { repositories } from "@shared/lib/repositories";
 import { services } from "@shared/lib/services";
 import { useMutation, useQueries } from "@tanstack/react-query";
 import { InferResult } from "kysely";
+import { CalendarIcon } from "lucide-react";
 import { useCallback } from "react";
 
 const LoadingState = () => <Skeleton className="h-8 w-full max-w-32" />;
@@ -64,6 +65,7 @@ export const GlobalProfileSelector = () => {
       defaultValue={currentActiveProfile}
     >
       <SelectTrigger className="w-auto">
+        <CalendarIcon />
         <SelectValue />
       </SelectTrigger>
       <SelectPopup>
