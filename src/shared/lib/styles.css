@@ -60,6 +60,7 @@
 }
 
 :root {
+  --radius: 0.5rem;
   --background: var(--color-zinc-950);
   --foreground: var(--color-zinc-100);
   --card: color-mix(in srgb, var(--color-zinc-900) 80%, var(--color-zinc-950));
