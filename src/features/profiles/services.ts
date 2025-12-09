@@ -1,31 +1,31 @@
-import { AppSettings } from "@features/configs/services";
+import { FeatureServices } from "@models/service";
 import { Profiles } from "@shared/lib/db";
-import { TypedStore } from "@shared/lib/stores";
+import { handleError } from "@shared/lib/utils";
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
 import { Insertable } from "kysely";
 import { ProfileRepository } from "./repository";
 
-export class ProfileServices {
-  private config: TypedStore<AppSettings>;
-  private repository: ProfileRepository;
-
-  constructor(config: TypedStore<AppSettings>, repository: ProfileRepository) {
-    this.config = config;
-    this.repository = repository;
-  }
-
+export class ProfileServices extends FeatureServices<ProfileRepository> {
   getProfiles = async () => {
-    return await this.repository.findAll.execute();
+    try {
+      return await this.repository.findAll.execute();
+    } catch (e) {
+      return handleError(e);
+    }
   };
 
   createProfile = async ({ name, timezone }: Insertable<Profiles>) => {
-    const result = await this.repository
-      .create({ name, timezone })
-      .executeTakeFirstOrThrow();
+    try {
+      const result = await this.repository
+        .insert({ name, timezone })
+        .executeTakeFirstOrThrow();
 
-    await this.config.set("active_profile", result.id);
+      await this.config.set("active_profile", result.id);
 
-    return result;
+      return result;
+    } catch (e) {
+      return handleError(e);
+    }
   };
 
   get query() {

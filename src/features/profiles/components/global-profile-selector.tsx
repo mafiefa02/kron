@@ -10,7 +10,7 @@ import {
 import { Skeleton } from "@shared/components/ui/skeleton";
 import { repositories } from "@shared/lib/repositories";
 import { services } from "@shared/lib/services";
-import { useMutation, useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { InferResult } from "kysely";
 import { CalendarIcon } from "lucide-react";
 import { useCallback } from "react";
@@ -18,6 +18,7 @@ import { useCallback } from "react";
 const LoadingState = () => <Skeleton className="h-8 w-full max-w-32" />;
 
 export const GlobalProfileSelector = () => {
+  const queryClient = useQueryClient();
   const [
     {
       data: profiles,
@@ -42,9 +43,10 @@ export const GlobalProfileSelector = () => {
     ],
   });
 
-  const { mutate: changeProfile } = useMutation(
-    services.config.set("active_profile"),
-  );
+  const { mutate: changeProfile } = useMutation({
+    ...services.config.set("active_profile"),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
+  });
 
   const handleChange = useCallback(
     (value: number | null) => {

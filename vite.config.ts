@@ -7,11 +7,17 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react({ babel: { plugins: ["babel-plugin-react-compiler"] } }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       "@shared": path.resolve(__dirname, "./src/shared"),
       "@features": path.resolve(__dirname, "./src/features"),
+      "@pages": path.resolve(__dirname, "./src/pages"),
+      "@models": path.resolve(__dirname, "./src/models"),
+      "@assets": path.resolve(__dirname, "./src/assets"),
     },
   },
 

@@ -1,27 +1,28 @@
-import { db, Profiles } from "@shared/lib/db";
-import type { Selectable } from "kysely";
-import { useEffect, useState } from "react";
+import { AddNewScheduleButton } from "./components/add-new-schedule-button";
+import { DateProvider } from "./components/date-provider";
+import { DateSelector } from "./components/date-selector";
+import { ScheduleList } from "./components/schedule-list";
+import { SearchProvider } from "./components/search-provider";
+import { SearchSchedules } from "./components/search-schedules";
 
 export const Home = () => {
-  const [data, setData] = useState<Selectable<Profiles>[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="flex w-full flex-1 flex-col gap-4">
+      <DateProvider>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold">Schedules</h1>
+          <DateSelector />
+        </div>
 
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const response = await db.selectFrom("profiles").selectAll().execute();
-        setData(response);
-      } catch (e) {
-        const error = e as Error;
-        setError(error.message);
-        console.error("Failed to fetch profiles", error.message);
-      }
-    };
+        <SearchProvider>
+          <div className="flex items-center gap-2">
+            <SearchSchedules />
+            <AddNewScheduleButton />
+          </div>
 
-    fetchProfiles();
-  }, []);
-
-  if (error !== null) return <p>{error}</p>;
-
-  return <p>{JSON.stringify(data)}</p>;
+          <ScheduleList />
+        </SearchProvider>
+      </DateProvider>
+    </div>
+  );
 };

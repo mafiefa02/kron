@@ -1,5 +1,6 @@
 import { Input as InputPrimitive } from "@base-ui-components/react/input";
 import { cn } from "@shared/lib/utils";
+import type * as React from "react";
 
 type InputProps = Omit<
   InputPrimitive.Props & React.RefAttributes<HTMLInputElement>,
@@ -29,10 +30,10 @@ function Input({
     >
       <InputPrimitive
         className={cn(
-          "w-full min-w-0 rounded-[inherit] px-[calc(--spacing(3)-1px)] py-[calc(--spacing(2)-1px)] outline-none placeholder:text-muted-foreground/72",
+          "w-full min-w-0 rounded-[inherit] px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] outline-none placeholder:text-muted-foreground/72",
           size === "sm" &&
-            "px-[calc(--spacing(2.5)-1px)] py-[calc(--spacing(1.5)-1px)]",
-          size === "lg" && "py-[calc(--spacing(2.5)-1px)]",
+            "px-[calc(--spacing(2.5)-1px)] py-[calc(--spacing(1)-1px)]",
+          size === "lg" && "py-[calc(--spacing(2)-1px)]",
           props.type === "search" &&
             "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
           props.type === "file" &&

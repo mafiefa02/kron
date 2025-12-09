@@ -1,10 +1,9 @@
-import { GlobalProfileSelector } from "@features/profiles/components/global-profile-selector";
 import { useTime } from "@shared/lib/hooks";
 import { format } from "date-fns";
-import { PanelLeftCloseIcon } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 import { BrandText } from "../brand-text";
 import { Button } from "../ui/button";
-import { buttonVariants } from "../ui/button/variants";
+import { WindowControls } from "../window-controls";
 
 const CurrentTime = () => {
   const time = useTime();
@@ -23,28 +22,30 @@ const CurrentTime = () => {
 
 export const Header = () => {
   return (
-    <header className="px-4 py-3">
-      <div className="flex items-center gap-8">
-        <div
-          className={buttonVariants({
-            variant: "ghost",
-            className:
-              "flex w-full max-w-44 items-center justify-center hover:bg-transparent",
-          })}
-        >
+    <header className="relative px-4 py-3">
+      <div
+        data-tauri-drag-region
+        className="absolute inset-0"
+      />
+      <div className="pointer-events-none relative z-10 flex items-center gap-8">
+        <div className="flex w-full max-w-44 items-center justify-center">
           <BrandText className="items-center text-2xl leading-0 [&_svg]:size-6" />
         </div>
-        <div className="flex w-full justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
             <Button
-              size="icon"
               variant="outline"
+              size="icon"
+              className="pointer-events-auto"
             >
-              <PanelLeftCloseIcon />
+              <PanelLeftClose />
             </Button>
             <CurrentTime />
           </div>
-          <GlobalProfileSelector />
+
+          <div className="pointer-events-auto">
+            <WindowControls />
+          </div>
         </div>
       </div>
     </header>

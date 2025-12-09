@@ -1,18 +1,15 @@
-import { DatabaseTables, Profiles } from "@shared/lib/db";
-import { Insertable, Kysely } from "kysely";
+import { FeatureRepository } from "@models/repository";
+import { Profiles } from "@shared/lib/db";
+import { Insertable } from "kysely";
 
-export class ProfileRepository {
-  private db: Kysely<DatabaseTables>;
-
-  constructor(database: Kysely<DatabaseTables>) {
-    this.db = database;
-  }
+export class ProfileRepository extends FeatureRepository<"profiles"> {
+  protected readonly table = "profiles";
 
   public get findAll() {
-    return this.db.selectFrom("profiles").selectAll();
+    return this.db.selectFrom(this.table).selectAll();
   }
 
-  public create(profile: Insertable<Profiles>) {
-    return this.db.insertInto("profiles").values(profile).returning("id");
+  public insert(profile: Insertable<Profiles>) {
+    return this.db.insertInto(this.table).values(profile).returning("id");
   }
 }

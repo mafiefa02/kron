@@ -4,6 +4,7 @@ import { Kysely } from "kysely";
 import type { ColumnType } from "kysely";
 import { TauriSqliteDialect } from "kysely-dialect-tauri";
 
+// Helper type for columns that are auto-generated (AutoIncrement or Default values)
 type Generated<T> =
   T extends ColumnType<infer S, infer I, infer U>
     ? ColumnType<S, I | undefined, U>
@@ -21,50 +22,60 @@ export interface Extensions {
   data_url: string;
 }
 
-export interface ProfilesExtensions {
+export interface ProfileExtensions {
   id: Generated<number>;
-  profile_id: Generated<number>;
-  extension_id: Generated<number>;
-  created_at: Generated<Date>;
-  updated_at: Date | null;
-  settings: string | null;
-  is_enabled: boolean;
+  profile_id: number;
+  extension_id: number;
+  settings: string | null; // stored as JSON string
+  is_enabled: Generated<number>; // 0 or 1
+  created_at: Generated<string>; // Stored as TEXT (ISO8601)
+  updated_at: string | null;
 }
 
 export interface Schedules {
   id: Generated<number>;
-  sound_id: Generated<number>;
-  profile_id: Generated<number>;
+  profile_id: number;
+  sound_id: number;
   name: string;
-  time: number;
-  created_at: Generated<Date>;
-  updated_at: Date | null;
-  is_active: boolean;
+  time: number; // Minutes from midnight
+  start_date: string; // YYYY-MM-DD
+  end_date: string | null; // YYYY-MM-DD
+  repeat: Generated<"once" | "daily" | "weekly">;
+  is_active: Generated<number>; // 0 or 1
+  created_at: Generated<string>;
+  updated_at: string | null;
 }
 
 export interface ScheduleDays {
-  schedule_id: Generated<number>;
-  day_of_week: number;
+  schedule_id: number;
+  day_of_week: number; // 1-7
 }
 
 export interface ScheduleOverrides {
+  schedule_id: number;
+  original_date: string; // YYYY-MM-DD
+  new_sound_id: number | null;
+  new_date: string | null; // YYYY-MM-DD
+  new_time: number | null; // Minutes from midnight
+  is_cancelled: Generated<number>; // 0 or 1
+  created_at: Generated<string>;
+  updated_at: string | null;
+}
+
+export interface Sounds {
   id: Generated<number>;
-  schedule_id: Generated<number>;
-  original_date: Date;
-  new_sound_id: Generated<number> | null;
-  new_date: Date | null;
-  new_time: Date | null;
-  created_at: Generated<Date>;
-  updated_at: Date | null;
+  name: string;
+  file_name: string;
 }
 
 export interface DatabaseTables {
   profiles: Profiles;
   extensions: Extensions;
-  profilesExtensions: ProfilesExtensions;
+  profile_extensions: ProfileExtensions;
+  sounds: Sounds;
   schedules: Schedules;
-  scheduleDays: ScheduleDays;
-  scheduleOverrides: ScheduleOverrides;
+  schedule_days: ScheduleDays;
+  schedule_overrides: ScheduleOverrides;
 }
 
 export const db = new Kysely<DatabaseTables>({

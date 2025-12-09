@@ -11,7 +11,7 @@ export const Onboarding = () => {
         <Spotlight />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1 text-center">
         <BrandText className="text-5xl [&_svg]:size-11" />
         <h3 className="text-center font-light tracking-tight text-muted-foreground">
           Let&apos;s get you set up as quick as possible

@@ -12,7 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "Kron",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": -100, "y": -100 },
         "width": 800,
         "minWidth": 640,
         "height": 600,
