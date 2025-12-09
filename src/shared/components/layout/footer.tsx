@@ -43,7 +43,7 @@ export const Footer = () => {
   return (
     <footer
       data-tauri-drag-region
-      className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground"
+      className="flex items-center justify-between px-4 py-3 text-xs text-muted-foreground"
     >
       <p className="pointer-events-none">
         <span className="font-medium">&copy; 2025 Kron</span> | Afief

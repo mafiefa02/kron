@@ -53,7 +53,7 @@ export const GlobalProfileSelector = () => {
       onValueChange={handleChange}
       defaultValue={activeProfile.data}
     >
-      <SelectTrigger className="w-auto">
+      <SelectTrigger>
         <CalendarIcon />
         <SelectValue />
       </SelectTrigger>
