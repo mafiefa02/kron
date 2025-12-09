@@ -19,20 +19,7 @@ const LoadingState = () => <Skeleton className="h-8 w-full max-w-32" />;
 
 export const GlobalProfileSelector = () => {
   const queryClient = useQueryClient();
-  const [
-    {
-      data: profiles,
-      isPending: isProfilePending,
-      isError: isProfileError,
-      error: profileError,
-    },
-    {
-      data: currentActiveProfile,
-      isPending: isCurrentPending,
-      isError: isCurrentError,
-      error: currentError,
-    },
-  ] = useQueries({
+  const [profiles, activeProfile] = useQueries({
     queries: [
       {
         ...services.profile.query.getProfiles,
@@ -43,28 +30,28 @@ export const GlobalProfileSelector = () => {
     ],
   });
 
-  const { mutate: changeProfile } = useMutation({
+  const changeProfile = useMutation({
     ...services.config.set("active_profile"),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
   });
 
   const handleChange = useCallback(
     (value: number | null) => {
-      if (value) return changeProfile(value);
+      if (value) return changeProfile.mutate(value);
     },
     [changeProfile],
   );
 
-  if (isProfilePending || isCurrentPending) return <LoadingState />;
+  if (profiles.isPending || activeProfile.isPending) return <LoadingState />;
 
-  if (isProfileError) return <p>{profileError.message}</p>;
-  if (isCurrentError) return <p>{currentError.message}</p>;
+  if (profiles.isError) return <p>{profiles.error.message}</p>;
+  if (activeProfile.isError) return <p>{activeProfile.error.message}</p>;
 
   return (
     <Select
-      items={profiles}
+      items={profiles.data}
       onValueChange={handleChange}
-      defaultValue={currentActiveProfile}
+      defaultValue={activeProfile.data}
     >
       <SelectTrigger className="w-auto">
         <CalendarIcon />
@@ -73,7 +60,7 @@ export const GlobalProfileSelector = () => {
       <SelectPopup>
         <SelectGroup>
           <SelectGroupLabel>Profiles</SelectGroupLabel>
-          {profiles.map((profile) => (
+          {profiles.data.map((profile) => (
             <SelectItem
               key={profile.value}
               value={profile.value}
