@@ -9,7 +9,7 @@ export const Layout = () => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <ScrollFade className="flex-1 rounded-l-3xl bg-background">
+          <ScrollFade className="flex-1 rounded-l-3xl border border-r-0 bg-background">
             <div className="flex min-h-full p-8">
               <Outlet />
             </div>
