@@ -5,9 +5,9 @@ import { NewProfileForm } from "./components/new-profile-form";
 
 export const Onboarding = () => {
   return (
-    <div className="relative flex h-dvh flex-1 flex-col items-center justify-center gap-6 overflow-hidden p-8">
-      <BackgroundBeams />
-      <div className="absolute size-full max-w-2xl">
+    <>
+      <BackgroundBeams className="pointer-events-none" />
+      <div className="pointer-events-none absolute size-full max-w-2xl">
         <Spotlight />
       </div>
 
@@ -18,6 +18,6 @@ export const Onboarding = () => {
         </h3>
       </div>
       <NewProfileForm />
-    </div>
+    </>
   );
 };

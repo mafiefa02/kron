@@ -1,9 +1,13 @@
+import { cn } from "@shared/lib/utils";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Minus, Square, X } from "lucide-react";
 import { useCallback } from "react";
 import { Button } from "./ui/button";
 
-export const WindowControls = () => {
+export const WindowControls = ({
+  className,
+  ...props
+}: React.ComponentProps<"div">) => {
   const appWindow = getCurrentWindow();
 
   const handleMinimize = useCallback(
@@ -22,7 +26,10 @@ export const WindowControls = () => {
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className={cn("flex items-center gap-2", className)}
+      {...props}
+    >
       <Button
         size="icon-sm"
         variant="ghost"
