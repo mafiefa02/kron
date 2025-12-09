@@ -7,7 +7,7 @@ import { SearchSchedules } from "./components/search-schedules";
 
 export const Home = () => {
   return (
-    <div className="flex w-full flex-1 flex-col gap-4">
+    <div className="flex w-full flex-1 flex-col gap-3">
       <DateProvider>
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold">Schedules</h1>
