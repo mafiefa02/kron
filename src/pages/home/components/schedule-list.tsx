@@ -82,8 +82,8 @@ const ScheduleListItem = ({
   repeat: Selectable<Schedules>["repeat"];
 }) => {
   return (
-    <Card>
-      <CardContent className="group relative flex items-center gap-4">
+    <Card className="group">
+      <CardContent className="relative flex items-center gap-4">
         <h1 className="text-lg font-semibold tabular-nums">
           {minutesToTime(time)}
         </h1>
