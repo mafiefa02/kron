@@ -1,5 +1,7 @@
 import { FeatureRepository } from "@models/repository";
 import { ScheduleDays, ScheduleOverrides, Schedules } from "@shared/lib/db";
+import { formatDate, parseDate } from "@shared/lib/utils";
+import { subDays } from "date-fns";
 import { Insertable, Selectable, sql } from "kysely";
 
 export class ScheduleRepository extends FeatureRepository<"schedules"> {
@@ -97,5 +99,51 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
 
   public insertDays(values: Insertable<ScheduleDays>[]) {
     return this.db.insertInto("schedule_days").values(values);
+  }
+
+  public delete(params: {
+    id: Selectable<Schedules>["id"];
+    profileId: Selectable<Schedules>["profile_id"];
+    deleteType: "only" | "afterward" | "all";
+    date: Selectable<ScheduleOverrides>["original_date"];
+  }) {
+    if (params.deleteType === "only") {
+      return this.db
+        .insertInto("schedule_overrides")
+        .values({
+          schedule_id: params.id,
+          original_date: params.date,
+          is_cancelled: 1,
+        })
+        .returning("schedule_id")
+        .executeTakeFirstOrThrow();
+    }
+
+    if (params.deleteType === "afterward") {
+      const prevDay = subDays(parseDate(params.date), 1);
+      const endDate = formatDate(prevDay);
+      return this.db
+        .updateTable(this.table)
+        .set({ end_date: endDate })
+        .where((eb) =>
+          eb.and([
+            eb("id", "=", params.id),
+            eb("profile_id", "=", params.profileId),
+          ]),
+        )
+        .returning("id")
+        .executeTakeFirstOrThrow();
+    }
+
+    return this.db
+      .deleteFrom(this.table)
+      .where((eb) =>
+        eb.and([
+          eb("id", "=", params.id),
+          eb("profile_id", "=", params.profileId),
+        ]),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
   }
 }

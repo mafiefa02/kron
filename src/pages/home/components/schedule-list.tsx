@@ -1,16 +1,31 @@
 import { NoDataIllustration } from "@shared/components/illustrations/no-data";
 import { WarningIllustration } from "@shared/components/illustrations/warning";
+import { Button } from "@shared/components/ui/button";
 import { Card, CardContent } from "@shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from "@shared/components/ui/dialog";
+import { Label } from "@shared/components/ui/label";
+import { Radio, RadioGroup } from "@shared/components/ui/radio-group";
 import { Separator } from "@shared/components/ui/separator";
 import { Skeleton } from "@shared/components/ui/skeleton";
 import { Schedules } from "@shared/lib/db";
 import { useDebounce } from "@shared/lib/hooks";
 import { services } from "@shared/lib/services";
 import { cn, formatDate, minutesToTime } from "@shared/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Selectable } from "kysely";
-import { RepeatIcon, Volume2Icon } from "lucide-react";
-import { useState } from "react";
+import { EditIcon, RepeatIcon, TrashIcon, Volume2Icon } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useDateContext } from "../contexts/date-context";
 import { useSearchContext } from "../contexts/search-context";
 
@@ -42,6 +57,7 @@ export const ScheduleList = ({
       {data.map((schedule) => (
         <ScheduleListItem
           key={schedule.id}
+          id={schedule.id}
           time={schedule.final_time}
           name={schedule.name}
           soundName={schedule.sound_name}
@@ -53,11 +69,13 @@ export const ScheduleList = ({
 };
 
 const ScheduleListItem = ({
+  id,
   time,
   name,
   soundName,
   repeat,
 }: {
+  id: number;
   time: number;
   name: string;
   soundName: string;
@@ -65,7 +83,7 @@ const ScheduleListItem = ({
 }) => {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4">
+      <CardContent className="group relative flex items-center gap-4">
         <h1 className="text-lg font-semibold tabular-nums">
           {minutesToTime(time)}
         </h1>
@@ -83,8 +101,128 @@ const ScheduleListItem = ({
             </ScheduleInfo>
           </div>
         </div>
+        <div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
+          <Button
+            variant="outline"
+            size="icon"
+          >
+            <EditIcon />
+          </Button>
+          <ScheduleDeleteButton id={id} />
+        </div>
       </CardContent>
     </Card>
+  );
+};
+
+const ScheduleDeleteButton = ({ id }: { id: Selectable<Schedules>["id"] }) => {
+  const { date } = useDateContext();
+  const queryClient = useQueryClient();
+
+  const [deleteType, setDeleteType] = useState<"only" | "all" | "afterward">(
+    "only",
+  );
+
+  const { mutate } = useMutation(
+    services.schedule.mutation.deleteSchedule({
+      id,
+      date: format(date, "yyyy-MM-dd"),
+    }),
+  );
+
+  const handleChange = useCallback(
+    (v: unknown) => setDeleteType(v as "only" | "all" | "afterward"),
+    [],
+  );
+
+  const handleDelete = useCallback(
+    () =>
+      mutate(deleteType, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["schedules"] });
+        },
+      }),
+    [mutate, deleteType, queryClient],
+  );
+
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button
+            variant="destructive-outline"
+            size="icon"
+          />
+        }
+      >
+        <TrashIcon />
+      </DialogTrigger>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+          <DialogDescription>
+            You are about to delete this schedule.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogPanel>
+          <RadioGroup
+            onValueChange={handleChange}
+            value={deleteType}
+          >
+            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+              <Radio
+                id="only"
+                value="only"
+              />
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="only">Only for this date</Label>
+                <p className="text-xs text-muted-foreground">
+                  Delete this schedule only for the selected date
+                </p>
+              </div>
+            </Label>
+            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+              <Radio
+                id="afterward"
+                value="afterward"
+              />
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="afterward">This date and after</Label>
+                <p className="text-xs text-muted-foreground">
+                  Delete this schedule for the selected date and after
+                </p>
+              </div>
+            </Label>
+            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+              <Radio
+                id="all"
+                value="all"
+              />
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="all">Every schedule</Label>
+                <p className="text-xs text-muted-foreground">
+                  Delete this schedule entirely, including past and future
+                  schedule.
+                </p>
+              </div>
+            </Label>
+          </RadioGroup>
+        </DialogPanel>
+        <DialogFooter>
+          <DialogClose render={<Button />}>Cancel</DialogClose>
+          <DialogClose
+            render={
+              <Button
+                onClick={handleDelete}
+                variant="destructive"
+              />
+            }
+          >
+            Delete
+          </DialogClose>
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
   );
 };
 
