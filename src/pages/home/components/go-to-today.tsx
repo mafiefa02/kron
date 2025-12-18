@@ -1,14 +1,13 @@
 import { Button } from "@shared/components/ui/button";
 import { isToday } from "date-fns";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 import { useDateContext } from "../contexts/date-context";
 
 export const GoToToday = () => {
   const { date, setDate } = useDateContext();
-  const [today] = useState(new Date());
 
-  const dateIsToday = useMemo(() => isToday(date), [date]);
-  const handleToToday = useCallback(() => setDate(today), [setDate, today]);
+  const dateIsToday = isToday(date);
+  const handleToToday = useCallback(() => setDate(new Date()), [setDate]);
 
   if (dateIsToday) return null;
 

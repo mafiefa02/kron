@@ -1,8 +1,8 @@
-import { AddNewScheduleButton } from "./components/add-new-schedule-button";
 import { DateProvider } from "./components/date-provider";
 import { DateSelector } from "./components/date-selector";
 import { GoToToday } from "./components/go-to-today";
 import { ScheduleList } from "./components/schedule-list";
+import { AddNewScheduleButton } from "./components/schedule/add-button";
 import { SearchProvider } from "./components/search-provider";
 import { SearchSchedules } from "./components/search-schedules";
 

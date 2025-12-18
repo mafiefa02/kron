@@ -39,7 +39,7 @@ CREATE TABLE profile_extensions (
 CREATE TABLE schedules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   profile_id INTEGER NOT NULL,
-  sound_id INTEGER NOT NULL,
+  sound_id INTEGER,
   name TEXT NOT NULL,
   time INTEGER NOT NULL, -- Minutes from midnight (0-1439)
   start_date TEXT NOT NULL, -- YYYY-MM-DD

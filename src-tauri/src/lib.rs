@@ -4,12 +4,20 @@ use tauri_plugin_sql::Migration;
 pub fn run() {
     let db_url = "sqlite:kron.db";
 
-    let migrations = vec![Migration {
-        version: 1,
-        description: "initial_schema",
-        sql: include_str!("../db/migrations/0001_initial_schema.sql"),
-        kind: tauri_plugin_sql::MigrationKind::Up,
-    }];
+    let migrations = vec![
+        Migration {
+            version: 1,
+            description: "initial_schema",
+            sql: include_str!("../db/migrations/0001_initial_schema.sql"),
+            kind: tauri_plugin_sql::MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "seed_demo_data",
+            sql: include_str!("../db/migrations/0002_seed_demo_data.sql"),
+            kind: tauri_plugin_sql::MigrationKind::Up,
+        },
+    ];
 
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())

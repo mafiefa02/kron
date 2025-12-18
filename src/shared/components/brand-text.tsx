@@ -19,7 +19,7 @@ export const BrandText = ({
       {...props}
     >
       {withIcon && <TimerIcon className="size-5 stroke-3" />}
-      <p>Kron</p>
+      <span>Kron</span>
     </p>
   );
 };

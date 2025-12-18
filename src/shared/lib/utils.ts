@@ -18,14 +18,23 @@ export const formatDate = (date: Date) => {
 };
 
 /** Minutes since midnight to "HH:mm" format */
-export const formatTime = (totalMinutes: number) => {
-  const date = new Date();
-  date.setHours(0, totalMinutes, 0, 0);
-  return format(date, "HH:mm");
+export const minutesToTime = (minutes: number | undefined | null) => {
+  if (minutes === undefined || minutes === null) return "";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+};
+
+/** Time "HH:mm" format to minutes since midnight */
+export const timeToMinutes = (time: string) => {
+  if (!time) return undefined;
+  const [h, m] = time.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return undefined;
+  return h * 60 + m;
 };
 
 /** Handles general error */
-export const handleError = (e: unknown): never => {
+export const handleThrowError = (e: unknown): never => {
   if (e instanceof Error) {
     throw new Error(e.message);
   }

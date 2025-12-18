@@ -6,7 +6,7 @@ import { Skeleton } from "@shared/components/ui/skeleton";
 import { Schedules } from "@shared/lib/db";
 import { useDebounce } from "@shared/lib/hooks";
 import { services } from "@shared/lib/services";
-import { cn, formatDate, formatTime } from "@shared/lib/utils";
+import { cn, formatDate, minutesToTime } from "@shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Selectable } from "kysely";
 import { RepeatIcon, Volume2Icon } from "lucide-react";
@@ -67,7 +67,7 @@ const ScheduleListItem = ({
     <Card>
       <CardContent className="flex items-center gap-4">
         <h1 className="text-lg font-semibold tabular-nums">
-          {formatTime(time)}
+          {minutesToTime(time)}
         </h1>
         <Separator orientation="vertical" />
         <div className="flex flex-col gap-1">
@@ -75,14 +75,12 @@ const ScheduleListItem = ({
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <ScheduleInfo>
               <Volume2Icon className="size-3.5" />
-              <p>{soundName}</p>
+              <p>{soundName ?? "Default"}</p>
             </ScheduleInfo>
-            {repeat !== "once" && (
-              <ScheduleInfo>
-                <RepeatIcon className="size-3.5" />
-                <p className="capitalize">{repeat}</p>
-              </ScheduleInfo>
-            )}
+            <ScheduleInfo>
+              <RepeatIcon className="size-3.5" />
+              <p className="capitalize">{repeat}</p>
+            </ScheduleInfo>
           </div>
         </div>
       </CardContent>

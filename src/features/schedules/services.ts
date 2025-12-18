@@ -1,12 +1,12 @@
 import { FeatureServices } from "@models/service";
 import { ScheduleOverrides, Schedules } from "@shared/lib/db";
-import { handleError } from "@shared/lib/utils";
+import { handleThrowError } from "@shared/lib/utils";
 import { mutationOptions, queryOptions } from "@tanstack/react-query";
 import { Insertable, Selectable } from "kysely";
 import { ScheduleRepository } from "./repository";
 
 export class ScheduleServices extends FeatureServices<ScheduleRepository> {
-  getSchedules = async (params: {
+  private getSchedules = async (params: {
     profileId: Selectable<Schedules>["profile_id"];
     date: Selectable<ScheduleOverrides>["original_date"];
     search?: Selectable<Schedules>["name"];
@@ -15,16 +15,45 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
     try {
       return await query.execute();
     } catch (e) {
-      return handleError(e);
+      return handleThrowError(e);
     }
   };
 
-  createSchedule = async (values: Insertable<Schedules>) => {
-    const query = this.repository.insert(values);
+  private createSchedule = async (
+    params: { profileId: Schedules["profile_id"] | "currentProfile" },
+    values: Omit<Insertable<Schedules>, "profile_id"> & { days: number[] },
+  ) => {
     try {
-      return await query.executeTakeFirstOrThrow();
+      const pid =
+        params.profileId === "currentProfile"
+          ? await this.config.get("active_profile")
+          : params.profileId;
+
+      if (!pid) throw new Error("No profile specified!");
+
+      const { days, ...rest } = values;
+
+      const query = this.repository.insert({
+        ...rest,
+        profile_id: pid,
+      });
+
+      const schedule = await query.executeTakeFirstOrThrow();
+
+      if (days.length > 0) {
+        await this.repository
+          .insertDays(
+            days.map((day) => ({
+              schedule_id: schedule.id,
+              day_of_week: day,
+            })),
+          )
+          .execute();
+      }
+
+      return schedule;
     } catch (e) {
-      return handleError(e);
+      return handleThrowError(e);
     }
   };
 
@@ -53,7 +82,7 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
 
               return result;
             } catch (e) {
-              return handleError(e);
+              return handleThrowError(e);
             }
           },
         });
@@ -63,10 +92,17 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
 
   get mutation() {
     return {
-      insertSchedule: mutationOptions({
-        mutationKey: ["create-schedule"],
-        mutationFn: this.createSchedule,
-      }),
+      insertSchedule: (params: {
+        profileId: Schedules["profile_id"] | "currentProfile";
+      }) =>
+        mutationOptions({
+          mutationKey: ["create-schedule", params],
+          mutationFn: async (
+            values: Omit<Insertable<Schedules>, "profile_id"> & {
+              days: number[];
+            },
+          ) => this.createSchedule(params, values),
+        }),
     };
   }
 }

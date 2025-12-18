@@ -1,5 +1,5 @@
 import { FeatureRepository } from "@models/repository";
-import { ScheduleOverrides, Schedules } from "@shared/lib/db";
+import { ScheduleDays, ScheduleOverrides, Schedules } from "@shared/lib/db";
 import { Insertable, Selectable, sql } from "kysely";
 
 export class ScheduleRepository extends FeatureRepository<"schedules"> {
@@ -12,7 +12,7 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
   }) {
     let query = this.db
       .selectFrom("schedules")
-      .innerJoin("sounds", "schedules.sound_id", "sounds.id")
+      .leftJoin("sounds", "schedules.sound_id", "sounds.id")
       .leftJoin("schedule_overrides", (join) =>
         join
           .onRef("schedules.id", "=", "schedule_overrides.schedule_id")
@@ -93,5 +93,9 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
 
   public insert(value: Insertable<Schedules>) {
     return this.db.insertInto(this.table).values(value).returning("id");
+  }
+
+  public insertDays(values: Insertable<ScheduleDays>[]) {
+    return this.db.insertInto("schedule_days").values(values);
   }
 }

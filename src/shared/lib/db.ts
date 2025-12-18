@@ -35,7 +35,7 @@ export interface ProfileExtensions {
 export interface Schedules {
   id: Generated<number>;
   profile_id: number;
-  sound_id: number;
+  sound_id: number | null;
   name: string;
   time: number; // Minutes from midnight
   start_date: string; // YYYY-MM-DD

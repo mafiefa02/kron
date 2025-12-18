@@ -1,6 +1,6 @@
 import { queryClient } from "@shared/lib/query-client";
 import { TypedStore } from "@shared/lib/stores";
-import { handleError } from "@shared/lib/utils";
+import { handleThrowError } from "@shared/lib/utils";
 import { UseMutationOptions, UseQueryOptions } from "@tanstack/react-query";
 
 export interface AppSettings {
@@ -30,7 +30,7 @@ export class ConfigServices {
           }
           return value;
         } catch (e) {
-          return handleError(e);
+          return handleThrowError(e);
         }
       },
       ...options,
@@ -42,11 +42,12 @@ export class ConfigServices {
     options?: Partial<UseMutationOptions<void, Error, AppSettings[K]>>,
   ): UseMutationOptions<void, Error, AppSettings[K]> {
     return {
+      mutationKey: ["set-config", { key }],
       mutationFn: async (value: AppSettings[K]) => {
         try {
           await this.store.set(key, value);
         } catch (e) {
-          return handleError(e);
+          return handleThrowError(e);
         }
       },
       ...options,
