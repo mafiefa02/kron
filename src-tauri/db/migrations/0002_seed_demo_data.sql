@@ -35,12 +35,12 @@ WHERE p.name = 'Work' AND s.name = 'Submarine';
 -- Seed Schedule Days
 -- Team Standup (Mon-Fri: 1-5)
 INSERT INTO schedule_days (schedule_id, day_of_week)
-SELECT id, 1 FROM schedules WHERE name = 'Team Standup' UNION ALL
-SELECT id, 2 FROM schedules WHERE name = 'Team Standup' UNION ALL
-SELECT id, 3 FROM schedules WHERE name = 'Team Standup' UNION ALL
-SELECT id, 4 FROM schedules WHERE name = 'Team Standup' UNION ALL
-SELECT id, 5 FROM schedules WHERE name = 'Team Standup';
+SELECT s.id, 1 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Team Standup' AND p.name = 'Work' UNION ALL
+SELECT s.id, 2 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Team Standup' AND p.name = 'Work' UNION ALL
+SELECT s.id, 3 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Team Standup' AND p.name = 'Work' UNION ALL
+SELECT s.id, 4 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Team Standup' AND p.name = 'Work' UNION ALL
+SELECT s.id, 5 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Team Standup' AND p.name = 'Work';
 
 -- Weekly Report (Fri: 5)
 INSERT INTO schedule_days (schedule_id, day_of_week)
-SELECT id, 5 FROM schedules WHERE name = 'Weekly Report';
+SELECT s.id, 5 FROM schedules s JOIN profiles p ON s.profile_id = p.id WHERE s.name = 'Weekly Report' AND p.name = 'Work';
