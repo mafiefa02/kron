@@ -69,6 +69,7 @@ export const AddNewScheduleForm = scheduleFormHook.withForm({
                 <field.DatePickerField
                   withError={false}
                   componentProps={{
+                    popover: { side: "top", align: "start" },
                     label: { label: "Start Date" },
                     calendar: { mode: "single" },
                     trigger: { className: "w-full justify-start" },
@@ -88,6 +89,7 @@ export const AddNewScheduleForm = scheduleFormHook.withForm({
                     children={(field) => (
                       <field.DatePickerField
                         componentProps={{
+                          popover: { side: "top", align: "start" },
                           label: { label: "End Date" },
                           calendar: {
                             mode: "single",

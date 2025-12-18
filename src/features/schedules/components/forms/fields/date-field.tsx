@@ -1,3 +1,4 @@
+import { PopoverPositionerProps } from "@base-ui-components/react/popover";
 import { FormFieldError } from "@shared/components/form-field-error";
 import { Button, ButtonProps } from "@shared/components/ui/button";
 import { Calendar } from "@shared/components/ui/calendar";
@@ -23,11 +24,20 @@ interface DatePickerTriggerProps extends ButtonProps {
 
 type DatePickerCalendarProps = DayPickerProps & PropsSingle;
 
+type DatePickerPopoverProps = {
+  side?: PopoverPositionerProps["side"];
+  align?: PopoverPositionerProps["align"];
+  sideOffset?: PopoverPositionerProps["sideOffset"];
+  alignOffset?: PopoverPositionerProps["alignOffset"];
+  tooltipStyle?: boolean;
+};
+
 interface DatePickerFieldProps {
-  componentProps: {
-    trigger: DatePickerTriggerProps;
-    label: DatePickerLabelProps;
-    calendar: DatePickerCalendarProps;
+  componentProps?: {
+    trigger?: DatePickerTriggerProps;
+    label?: DatePickerLabelProps;
+    calendar?: DatePickerCalendarProps;
+    popover?: DatePickerPopoverProps;
   };
   withError?: boolean;
 }
@@ -56,7 +66,7 @@ export const DatePickerField = ({
       invalid={field.state.meta.errors.length > 0}
       className="w-full"
     >
-      <FieldLabel>{componentProps.label.label}</FieldLabel>
+      <FieldLabel>{componentProps?.label?.label}</FieldLabel>
       <Popover
         open={open}
         onOpenChange={setOpen}
@@ -65,7 +75,7 @@ export const DatePickerField = ({
           render={
             <Button
               variant="outline"
-              {...componentProps.trigger}
+              {...componentProps?.trigger}
             />
           }
         >
@@ -74,16 +84,17 @@ export const DatePickerField = ({
             format(field.state.value, "PP")
           ) : (
             <span className="text-muted-foreground/72">
-              {componentProps.trigger.placeholder ?? "Select date"}
+              {componentProps?.trigger?.placeholder ?? "Select date"}
             </span>
           )}
         </PopoverTrigger>
-        <PopoverPopup>
+        <PopoverPopup {...componentProps?.popover}>
           <Calendar
+            mode="single"
             className="bg-popover p-0"
             selected={field.state.value ?? undefined}
             onSelect={handleSelect}
-            {...componentProps.calendar}
+            {...componentProps?.calendar}
           />
         </PopoverPopup>
       </Popover>
