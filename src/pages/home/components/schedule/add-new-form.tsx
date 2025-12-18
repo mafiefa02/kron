@@ -5,7 +5,6 @@ import { scheduleFormOpts } from "./add-new-form-options";
 export const AddNewScheduleForm = scheduleFormHook.withForm({
   ...scheduleFormOpts,
   render: ({ form }) => {
-    console.log(form.state.values);
     return (
       <div className="flex flex-col gap-4">
         <form.AppField

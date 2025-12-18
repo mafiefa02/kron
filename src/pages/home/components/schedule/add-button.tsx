@@ -29,7 +29,6 @@ export const AddNewScheduleButton = (props: ButtonProps) => {
   const queryClient = useQueryClient();
   const scheduleForm = scheduleFormHook.useAppForm({
     ...scheduleFormOpts,
-    onSubmitInvalid: (v) => console.error(v.formApi.getAllErrors()),
     onSubmit: ({ value }) =>
       mutate(
         {
