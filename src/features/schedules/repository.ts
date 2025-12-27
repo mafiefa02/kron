@@ -1,5 +1,5 @@
 import { FeatureRepository } from "@models/repository";
-import { ScheduleDays, ScheduleOverrides, Schedules } from "@shared/lib/db";
+import { ScheduleOverrides, Schedules } from "@shared/lib/db";
 import { formatDate, parseDate } from "@shared/lib/utils";
 import { subDays } from "date-fns";
 import { Insertable, Selectable, sql } from "kysely";
@@ -86,12 +86,29 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
       .orderBy("final_time", "asc");
   }
 
-  public insert(value: Insertable<Schedules>) {
-    return this.db.insertInto(this.table).values(value).returning("id");
-  }
+  public insert(value: Insertable<Schedules> & { days?: number[] }) {
+    return this.db.transaction().execute(async (trx) => {
+      const { days, ...rest } = value;
+      const result = await trx
+        .insertInto(this.table)
+        .values(rest)
+        .returning("id")
+        .executeTakeFirstOrThrow();
 
-  public insertDays(values: Insertable<ScheduleDays>[]) {
-    return this.db.insertInto("schedule_days").values(values);
+      if (rest.repeat === "weekly" && days && days.length > 0) {
+        await trx
+          .insertInto("schedule_days")
+          .values(
+            days.map((day) => ({
+              schedule_id: result.id,
+              day_of_week: day,
+            })),
+          )
+          .execute();
+      }
+
+      return result;
+    });
   }
 
   public delete(params: {

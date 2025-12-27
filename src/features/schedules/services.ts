@@ -31,25 +31,10 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
 
       if (!pid) throw new Error("No profile specified!");
 
-      const { days, ...rest } = values;
-
-      const query = this.repository.insert({
-        ...rest,
+      const schedule = await this.repository.insert({
+        ...values,
         profile_id: pid,
       });
-
-      const schedule = await query.executeTakeFirstOrThrow();
-
-      if (days.length > 0) {
-        await this.repository
-          .insertDays(
-            days.map((day) => ({
-              schedule_id: schedule.id,
-              day_of_week: day,
-            })),
-          )
-          .execute();
-      }
 
       return schedule;
     } catch (e) {
