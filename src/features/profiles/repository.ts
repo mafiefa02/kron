@@ -1,15 +1,44 @@
 import { FeatureRepository } from "@models/repository";
 import { Profiles } from "@shared/lib/db";
-import { Insertable } from "kysely";
+import { Insertable, Updateable } from "kysely";
 
 export class ProfileRepository extends FeatureRepository<"profiles"> {
   protected readonly table = "profiles";
 
-  public get findAll() {
-    return this.db.selectFrom(this.table).selectAll();
+  public findAll(params?: { search?: string }) {
+    return this.db
+      .selectFrom(this.table)
+      .leftJoin("schedules", "profiles.id", "schedules.profile_id")
+      .select(({ fn }) => [
+        "profiles.id",
+        "profiles.name",
+        "profiles.timezone",
+        fn.count<number>("schedules.id").as("schedule_count"),
+      ])
+      .$if(!!params?.search, (qb) =>
+        qb.where("profiles.name", "like", `%${params?.search}%`),
+      )
+      .groupBy("profiles.id");
   }
 
   public insert(profile: Insertable<Profiles>) {
     return this.db.insertInto(this.table).values(profile).returning("id");
+  }
+
+  public update(id: number, profile: Updateable<Profiles>) {
+    return this.db
+      .updateTable(this.table)
+      .set(profile)
+      .where("id", "=", id)
+      .returning("id")
+      .executeTakeFirstOrThrow();
+  }
+
+  public delete(id: number) {
+    return this.db
+      .deleteFrom(this.table)
+      .where("id", "=", id)
+      .returning("id")
+      .executeTakeFirstOrThrow();
   }
 }

@@ -22,8 +22,10 @@ export const GlobalProfileSelector = () => {
   const [profiles, activeProfile] = useQueries({
     queries: [
       {
-        ...services.profile.query.getProfiles,
-        select: (data: InferResult<typeof repositories.profile.findAll>) =>
+        ...services.profile.query.getProfiles(),
+        select: (
+          data: InferResult<ReturnType<typeof repositories.profile.findAll>>,
+        ) =>
           data.map((profile) => ({ label: profile.name, value: profile.id })),
       },
       services.config.get("active_profile"),
@@ -32,7 +34,10 @@ export const GlobalProfileSelector = () => {
 
   const changeProfile = useMutation({
     ...services.config.set("active_profile"),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["schedules"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["config", "active_profile"] });
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    },
   });
 
   const handleChange = useCallback(
