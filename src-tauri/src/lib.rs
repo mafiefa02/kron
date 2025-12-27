@@ -1,5 +1,7 @@
 use tauri_plugin_sql::Migration;
 
+mod scheduler;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let db_url = "sqlite:kron.db";
@@ -20,6 +22,10 @@ pub fn run() {
     ];
 
     tauri::Builder::default()
+        .setup(|app| {
+            scheduler::start_scheduler(app.handle());
+            Ok(())
+        })
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::new()
