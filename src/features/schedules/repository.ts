@@ -34,6 +34,9 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
         sql<number>`COALESCE(schedule_overrides.new_time, schedules.time)`.as(
           "final_time",
         ),
+        sql<number | null>`COALESCE(override_sounds.id, sounds.id)`.as(
+          "final_sound_id",
+        ),
         sql<string>`COALESCE(override_sounds.name, sounds.name)`.as(
           "sound_name",
         ),
@@ -109,6 +112,144 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
 
       return result;
     });
+  }
+
+  public update(params: {
+    id: Selectable<Schedules>["id"];
+    profileId: Selectable<Schedules>["profile_id"];
+    updateType: "only" | "afterward" | "all";
+    date: Selectable<ScheduleOverrides>["original_date"];
+    values: {
+      name: string;
+      time: number;
+      sound_id: number | null;
+      is_cancelled: boolean;
+    };
+  }) {
+    if (params.updateType === "only") {
+      return this.db
+        .insertInto("schedule_overrides")
+        .values({
+          schedule_id: params.id,
+          original_date: params.date,
+          new_name: params.values.name,
+          new_time: params.values.time,
+          new_sound_id: params.values.sound_id,
+          is_cancelled: params.values.is_cancelled ? 1 : 0,
+        })
+        .onConflict((oc) =>
+          oc.columns(["schedule_id", "original_date"]).doUpdateSet({
+            new_name: params.values.name,
+            new_time: params.values.time,
+            new_sound_id: params.values.sound_id,
+            is_cancelled: params.values.is_cancelled ? 1 : 0,
+          }),
+        )
+        .returning("schedule_id")
+        .executeTakeFirstOrThrow();
+    }
+
+    if (params.updateType === "afterward") {
+      return this.db.transaction().execute(async (trx) => {
+        const original = await trx
+          .selectFrom("schedules")
+          .select(["repeat", "time"])
+          .where("id", "=", params.id)
+          .executeTakeFirstOrThrow();
+
+        await trx
+          .deleteFrom("schedule_overrides")
+          .where("schedule_id", "=", params.id)
+          .where("original_date", "=", params.date)
+          .execute();
+
+        await trx
+          .deleteFrom("schedules")
+          .where("profile_id", "=", params.profileId)
+          .where("start_date", ">=", params.date)
+          .where("time", "=", original.time)
+          .where("id", "!=", params.id)
+          .execute();
+
+        const prevDay = subDays(parseDate(params.date), 1);
+        const endDate = formatDate(prevDay);
+        await trx
+          .updateTable(this.table)
+          .set({ end_date: endDate })
+          .where((eb) =>
+            eb.and([
+              eb("id", "=", params.id),
+              eb("profile_id", "=", params.profileId),
+            ]),
+          )
+          .execute();
+
+        if (!params.values.is_cancelled) {
+          const newSchedule = await trx
+            .insertInto("schedules")
+            .columns([
+              "profile_id",
+              "name",
+              "time",
+              "sound_id",
+              "repeat",
+              "start_date",
+              "is_active",
+            ])
+            .expression(
+              trx
+                .selectFrom("schedules")
+                .select([
+                  "profile_id",
+                  sql.val(params.values.name).as("name"),
+                  sql.val(params.values.time).as("time"),
+                  sql.val(params.values.sound_id).as("sound_id"),
+                  "repeat",
+                  sql.val(params.date).as("start_date"),
+                  sql.lit(1).as("is_active"),
+                ])
+                .where("id", "=", params.id),
+            )
+            .returning("id")
+            .executeTakeFirstOrThrow();
+
+          if (original.repeat === "weekly") {
+            await trx
+              .insertInto("schedule_days")
+              .columns(["schedule_id", "day_of_week"])
+              .expression(
+                trx
+                  .selectFrom("schedule_days")
+                  .select([
+                    sql.val(newSchedule.id).as("schedule_id"),
+                    "day_of_week",
+                  ])
+                  .where("schedule_id", "=", params.id),
+              )
+              .execute();
+          }
+          return newSchedule;
+        }
+        return { id: params.id };
+      });
+    }
+
+    return this.db
+      .updateTable(this.table)
+      .set({
+        name: params.values.name,
+        time: params.values.time,
+        sound_id: params.values.sound_id,
+        is_active: params.values.is_cancelled ? 0 : 1,
+      })
+      .where((eb) =>
+        eb.and([
+          eb("id", "=", params.id),
+          eb("profile_id", "=", params.profileId),
+        ]),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
   }
 
   public delete(params: {

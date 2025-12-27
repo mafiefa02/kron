@@ -63,6 +63,27 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
     }
   }
 
+  private async updateSchedule(
+    params: Omit<Parameters<ScheduleRepository["update"]>[0], "profileId">,
+    profileId: Selectable<Schedules>["profile_id"] | "currentProfile",
+  ) {
+    try {
+      const pid =
+        profileId === "currentProfile"
+          ? await this.config.get("active_profile")
+          : profileId;
+
+      if (!pid) throw new Error("No profile specified!");
+
+      return await this.repository.update({
+        ...params,
+        profileId: pid,
+      });
+    } catch (e) {
+      return handleThrowError(e);
+    }
+  }
+
   get query() {
     return {
       getSchedules: (params: {
@@ -125,6 +146,28 @@ export class ScheduleServices extends FeatureServices<ScheduleRepository> {
               ScheduleRepository["delete"]
             >[0]["deleteType"],
           ) => this.deleteSchedule({ ...params, deleteType }, profileId),
+        }),
+      updateSchedule: (
+        params: Omit<
+          Parameters<ScheduleRepository["update"]>[0],
+          "profileId" | "updateType" | "values"
+        >,
+        profileId:
+          | Selectable<Schedules>["profile_id"]
+          | "currentProfile" = "currentProfile",
+      ) =>
+        mutationOptions({
+          mutationKey: ["update-schedule", params],
+          mutationFn: async (args: {
+            updateType: Parameters<
+              ScheduleRepository["update"]
+            >[0]["updateType"];
+            values: Parameters<ScheduleRepository["update"]>[0]["values"];
+          }) =>
+            this.updateSchedule(
+              { ...params, updateType: args.updateType, values: args.values },
+              profileId,
+            ),
         }),
     };
   }

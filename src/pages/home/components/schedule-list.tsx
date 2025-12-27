@@ -2,6 +2,7 @@ import { NoDataIllustration } from "@shared/components/illustrations/no-data";
 import { WarningIllustration } from "@shared/components/illustrations/warning";
 import { Button } from "@shared/components/ui/button";
 import { Card, CardContent } from "@shared/components/ui/card";
+import { Checkbox } from "@shared/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -13,14 +14,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@shared/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+} from "@shared/components/ui/field";
+import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
 import { Radio, RadioGroup } from "@shared/components/ui/radio-group";
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@shared/components/ui/select";
 import { Separator } from "@shared/components/ui/separator";
 import { Skeleton } from "@shared/components/ui/skeleton";
 import { Schedules } from "@shared/lib/db";
 import { useDebounce } from "@shared/lib/hooks";
 import { services } from "@shared/lib/services";
-import { cn, formatDate, minutesToTime } from "@shared/lib/utils";
+import {
+  cn,
+  formatDate,
+  minutesToTime,
+  timeToMinutes,
+} from "@shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Selectable } from "kysely";
@@ -61,6 +80,7 @@ export const ScheduleList = ({
           time={schedule.final_time}
           name={schedule.name}
           soundName={schedule.sound_name}
+          soundId={schedule.final_sound_id}
           repeat={schedule.repeat}
         />
       ))}
@@ -73,12 +93,14 @@ const ScheduleListItem = ({
   time,
   name,
   soundName,
+  soundId,
   repeat,
 }: {
   id: number;
   time: number;
   name: string;
   soundName: string;
+  soundId: number | null;
   repeat: Selectable<Schedules>["repeat"];
 }) => {
   return (
@@ -102,12 +124,11 @@ const ScheduleListItem = ({
           </div>
         </div>
         <div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
-          <Button
-            variant="outline"
-            size="icon"
-          >
-            <EditIcon />
-          </Button>
+          <ScheduleEditButton
+            id={id}
+            repeat={repeat}
+            initialData={{ name, time, soundId }}
+          />
           <ScheduleDeleteButton
             id={id}
             repeat={repeat}
@@ -115,6 +136,247 @@ const ScheduleListItem = ({
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const ScheduleEditButton = ({
+  id,
+  repeat,
+  initialData,
+}: {
+  id: Selectable<Schedules>["id"];
+  repeat: Selectable<Schedules>["repeat"];
+  initialData: {
+    name: string;
+    time: number;
+    soundId: number | null;
+  };
+}) => {
+  const { date } = useDateContext();
+  const queryClient = useQueryClient();
+
+  const [formState, setFormState] = useState({
+    name: initialData.name,
+    time: minutesToTime(initialData.time),
+    soundId: initialData.soundId,
+    isSkipped: false,
+  });
+
+  const [updateType, setUpdateType] = useState<"only" | "all" | "afterward">(
+    "all",
+  );
+
+  const { data: sounds } = useQuery({
+    ...services.sound.query.getProfiles,
+    select: (sounds) => [
+      { label: "Default", value: null },
+      ...sounds.map((s) => ({ label: s.name, value: String(s.id) })),
+    ],
+  });
+
+  const { mutate } = useMutation(
+    services.schedule.mutation.updateSchedule({
+      id,
+      date: format(date, "yyyy-MM-dd"),
+    }),
+  );
+
+  const handleSave = useCallback(() => {
+    mutate(
+      {
+        updateType: repeat === "once" ? "only" : updateType,
+        values: {
+          name: formState.name,
+          time: timeToMinutes(formState.time) || 0,
+          sound_id: formState.soundId,
+          is_cancelled: formState.isSkipped,
+        },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["schedules"] });
+        },
+      },
+    );
+  }, [mutate, repeat, updateType, formState, queryClient]);
+
+  const handleChange = useCallback(
+    (v: unknown) => setUpdateType(v as "only" | "all" | "afterward"),
+    [],
+  );
+
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+          />
+        }
+      >
+        <EditIcon />
+      </DialogTrigger>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>Edit Schedule</DialogTitle>
+          <DialogDescription>
+            Make changes to the schedule&apos;s information.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogPanel className="grid gap-4">
+          <Field>
+            <FieldLabel>Name</FieldLabel>
+            <Input
+              value={formState.name}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, name: e.target.value }))
+              }
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Time</FieldLabel>
+            <Input
+              type="time"
+              value={formState.time}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, time: e.target.value }))
+              }
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Sound</FieldLabel>
+            <Select
+              value={
+                formState.soundId === null ? "null" : String(formState.soundId)
+              }
+              onValueChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  soundId: val === "null" ? null : Number(val),
+                }))
+              }
+              items={
+                sounds?.map((s) => ({
+                  ...s,
+                  value: s.value === null ? "null" : s.value,
+                })) ?? []
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectPopup>
+                {sounds?.map((sound) => (
+                  <SelectItem
+                    key={sound.value ?? "null"}
+                    value={sound.value ?? "null"}
+                  >
+                    {sound.label}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+          </Field>
+          <Field className="flex flex-row items-start justify-between gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:bg-accent/50">
+            <div className="pointer-events-none flex flex-col gap-1">
+              <FieldLabel>Skip this schedule?</FieldLabel>
+              <FieldDescription>
+                Whether to skip this schedule from playing on this selected
+                date.
+              </FieldDescription>
+            </div>
+            <Checkbox
+              checked={formState.isSkipped}
+              onCheckedChange={(pressed) =>
+                setFormState((prev) => ({ ...prev, isSkipped: pressed }))
+              }
+            />
+          </Field>
+        </DialogPanel>
+        <DialogFooter>
+          {repeat === "once" ? (
+            <>
+              <DialogClose render={<Button variant="ghost" />}>
+                Cancel
+              </DialogClose>
+              <DialogClose render={<Button onClick={handleSave} />}>
+                Save Changes
+              </DialogClose>
+            </>
+          ) : (
+            <>
+              <DialogClose render={<Button variant="ghost" />}>
+                Cancel
+              </DialogClose>
+              <Dialog>
+                <DialogTrigger render={<Button />}>Next</DialogTrigger>
+                <DialogPopup>
+                  <DialogHeader>
+                    <DialogTitle>Apply changes to?</DialogTitle>
+                    <DialogDescription>
+                      Where should we apply your changes on the schedule?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogPanel>
+                    <RadioGroup
+                      onValueChange={handleChange}
+                      value={updateType}
+                    >
+                      <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                        <Radio
+                          id="only"
+                          value="only"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <Label htmlFor="only">Only for this date</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Update this schedule only for the selected date
+                          </p>
+                        </div>
+                      </Label>
+                      <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                        <Radio
+                          id="afterward"
+                          value="afterward"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <Label htmlFor="afterward">This date and after</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Update this schedule for the selected date and after
+                          </p>
+                        </div>
+                      </Label>
+                      <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                        <Radio
+                          id="all"
+                          value="all"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <Label htmlFor="all">Every schedule</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Update this schedule entirely, including past and
+                            future schedule.
+                          </p>
+                        </div>
+                      </Label>
+                    </RadioGroup>
+                  </DialogPanel>
+                  <DialogFooter>
+                    <DialogClose render={<Button variant="ghost" />}>
+                      Cancel
+                    </DialogClose>
+                    <DialogClose render={<Button onClick={handleSave} />}>
+                      Save Changes
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogPopup>
+              </Dialog>
+            </>
+          )}
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
   );
 };
 

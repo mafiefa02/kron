@@ -54,6 +54,7 @@ export interface ScheduleDays {
 export interface ScheduleOverrides {
   schedule_id: number;
   original_date: string; // YYYY-MM-DD
+  new_name: string | null;
   new_sound_id: number | null;
   new_date: string | null; // YYYY-MM-DD
   new_time: number | null; // Minutes from midnight

@@ -50,7 +50,6 @@ CREATE TABLE schedules (
   updated_at TEXT,
   FOREIGN KEY (profile_id) REFERENCES profiles (id) ON DELETE CASCADE,
   FOREIGN KEY (sound_id) REFERENCES sounds (id) ON DELETE SET NULL,
-  CONSTRAINT uq_profile_schedule_name UNIQUE (profile_id, name),
   CONSTRAINT chk_schedule_active CHECK (is_active IN (0, 1)),
   CONSTRAINT chk_schedule_repeat CHECK (repeat IN ('once', 'daily', 'weekly')),
   CONSTRAINT chk_schedule_time_range CHECK (time BETWEEN 0 AND 1439)
