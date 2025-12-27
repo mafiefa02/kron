@@ -12,13 +12,13 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
     date: Selectable<ScheduleOverrides>["original_date"];
     search?: Selectable<Schedules>["name"];
   }) {
-    let query = this.db
+    return this.db
       .selectFrom("schedules")
       .leftJoin("sounds", "schedules.sound_id", "sounds.id")
       .leftJoin("schedule_overrides", (join) =>
         join
           .onRef("schedules.id", "=", "schedule_overrides.schedule_id")
-          .on((eb) => eb("schedule_overrides.original_date", "=", params.date)),
+          .on("schedule_overrides.original_date", "=", params.date),
       )
       .leftJoin(
         "sounds as override_sounds",
@@ -27,7 +27,9 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
       )
       .select([
         "schedules.id",
-        "schedules.name",
+        sql<string>`COALESCE(schedule_overrides.new_name, schedules.name)`.as(
+          "name",
+        ),
         "schedules.repeat",
         sql<number>`COALESCE(schedule_overrides.new_time, schedules.time)`.as(
           "final_time",
@@ -44,11 +46,16 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
       .where("schedules.profile_id", "=", params.profileId)
       .where("schedules.is_active", "=", 1)
       .where("schedules.start_date", "<=", params.date)
-      .where((eb) =>
-        eb.or([
-          eb("schedules.end_date", ">=", params.date),
-          eb("schedules.end_date", "is", null),
-        ]),
+      .where(
+        sql`COALESCE(schedules.end_date, ${params.date})`,
+        ">=",
+        params.date,
+      )
+      .where(sql`COALESCE(schedule_overrides.is_cancelled, 0)`, "=", 0)
+      .where(
+        sql`COALESCE(schedule_overrides.new_date, ${params.date})`,
+        "=",
+        params.date,
       )
       .where((eb) =>
         eb.or([
@@ -73,24 +80,10 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
           ]),
         ]),
       )
-      .where((eb) =>
-        eb.and([
-          eb.or([
-            eb("schedule_overrides.is_cancelled", "is", null),
-            eb("schedule_overrides.is_cancelled", "=", 0),
-          ]),
-          eb.or([
-            eb("schedule_overrides.new_date", "is", null),
-            eb("schedule_overrides.new_date", "=", params.date),
-          ]),
-        ]),
-      );
-
-    if (params.search) {
-      query = query.where("schedules.name", "like", `%${params.search}%`);
-    }
-
-    return query.orderBy("final_time", "asc");
+      .$if(!!params.search, (qb) =>
+        qb.where("schedules.name", "like", `%${params.search}%`),
+      )
+      .orderBy("final_time", "asc");
   }
 
   public insert(value: Insertable<Schedules>) {
