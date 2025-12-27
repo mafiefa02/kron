@@ -67,6 +67,7 @@ CREATE TABLE schedule_days (
 CREATE TABLE schedule_overrides (
   schedule_id INTEGER NOT NULL,
   original_date TEXT NOT NULL, -- YYYY-MM-DD
+  new_name TEXT,
   new_sound_id INTEGER,
   new_date TEXT, -- YYYY-MM-DD
   new_time INTEGER,
