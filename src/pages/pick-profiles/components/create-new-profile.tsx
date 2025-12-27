@@ -1,5 +1,6 @@
-import { ProfileNameFieldControl } from "@features/profiles/components/profile-name-field";
-import { useCreateProfileForm } from "@features/profiles/hooks";
+import { profileFormHook } from "@features/profiles/components/forms/hook";
+import { AddNewProfileForm } from "@pages/profiles/components/add-new-profile-form";
+import { profileFormOpts } from "@pages/profiles/components/add-new-profile-form-options";
 import {
   Alert,
   AlertDescription,
@@ -17,17 +18,55 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@shared/components/ui/dialog";
-import { Field, FieldError } from "@shared/components/ui/field";
-import { Form } from "@shared/components/ui/form";
+import { services } from "@shared/lib/services";
 import { cn } from "@shared/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleAlertIcon, Loader2Icon, PlusIcon } from "lucide-react";
+import { useCallback } from "react";
+import { useNavigate } from "react-router";
 
 export const CreateNewProfile = ({ className, ...props }: ButtonProps) => {
-  const { errors, handleSubmit, mutation } = useCreateProfileForm();
-  const { isPending, isError, error } = mutation;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { mutate, isPending, isError, error } = useMutation(
+    services.profile.mutation.insertProfile,
+  );
+
+  const form = profileFormHook.useAppForm({
+    ...profileFormOpts,
+    onSubmit: async ({ value }) => {
+      await new Promise<void>((resolve, reject) => {
+        mutate(
+          {
+            name: value["profile-name"],
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ["profiles"] });
+              navigate("/");
+              resolve();
+            },
+            onError: (err) => {
+              reject(err);
+            },
+          },
+        );
+      });
+    },
+  });
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        form.reset();
+      }
+    },
+    [form],
+  );
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
           <Button
@@ -53,54 +92,31 @@ export const CreateNewProfile = ({ className, ...props }: ButtonProps) => {
         </DialogHeader>
 
         <DialogPanel>
-          <Form
-            id="create-profile"
-            errors={errors}
-            onFormSubmit={handleSubmit}
-          >
-            <Field name="profile-name">
-              <ProfileNameFieldControl />
+          {isError && (
+            <Alert
+              className="text-xs"
+              variant="error"
+            >
+              <CircleAlertIcon />
+              <AlertTitle>Something went wrong!</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
 
-              {isError && (
-                <Alert
-                  className="text-xs"
-                  variant="error"
-                >
-                  <CircleAlertIcon />
-                  <AlertTitle>Something went wrong!</AlertTitle>
-                  <AlertDescription>{error.message}</AlertDescription>
-                </Alert>
-              )}
-
-              <FieldError
-                render={({ children }) => (
-                  <Alert
-                    className="text-xs"
-                    variant="error"
-                  >
-                    <CircleAlertIcon />
-                    <AlertDescription>{children}</AlertDescription>
-                  </Alert>
-                )}
-              />
-            </Field>
-          </Form>
+          <AddNewProfileForm form={form} />
         </DialogPanel>
 
         <DialogFooter>
           <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-          <Button
-            form="create-profile"
-            type="submit"
-            size={isPending ? "icon" : "default"}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <Loader2Icon className="animate-spin" />
-            ) : (
-              <p>Create</p>
-            )}
-          </Button>
+          <form.AppForm>
+            <form.SubmitButton size={isPending ? "icon" : "default"}>
+              {isPending ? (
+                <Loader2Icon className="animate-spin" />
+              ) : (
+                <p>Create</p>
+              )}
+            </form.SubmitButton>
+          </form.AppForm>
         </DialogFooter>
       </DialogPopup>
     </Dialog>
