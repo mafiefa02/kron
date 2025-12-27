@@ -108,19 +108,28 @@ const ScheduleListItem = ({
           >
             <EditIcon />
           </Button>
-          <ScheduleDeleteButton id={id} />
+          <ScheduleDeleteButton
+            id={id}
+            repeat={repeat}
+          />
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const ScheduleDeleteButton = ({ id }: { id: Selectable<Schedules>["id"] }) => {
+const ScheduleDeleteButton = ({
+  id,
+  repeat,
+}: {
+  id: Selectable<Schedules>["id"];
+  repeat: Selectable<Schedules>["repeat"];
+}) => {
   const { date } = useDateContext();
   const queryClient = useQueryClient();
 
   const [deleteType, setDeleteType] = useState<"only" | "all" | "afterward">(
-    "only",
+    "all",
   );
 
   const { mutate } = useMutation(
@@ -164,50 +173,52 @@ const ScheduleDeleteButton = ({ id }: { id: Selectable<Schedules>["id"] }) => {
             You are about to delete this schedule.
           </DialogDescription>
         </DialogHeader>
-        <DialogPanel>
-          <RadioGroup
-            onValueChange={handleChange}
-            value={deleteType}
-          >
-            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-              <Radio
-                id="only"
-                value="only"
-              />
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="only">Only for this date</Label>
-                <p className="text-xs text-muted-foreground">
-                  Delete this schedule only for the selected date
-                </p>
-              </div>
-            </Label>
-            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-              <Radio
-                id="afterward"
-                value="afterward"
-              />
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="afterward">This date and after</Label>
-                <p className="text-xs text-muted-foreground">
-                  Delete this schedule for the selected date and after
-                </p>
-              </div>
-            </Label>
-            <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-              <Radio
-                id="all"
-                value="all"
-              />
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="all">Every schedule</Label>
-                <p className="text-xs text-muted-foreground">
-                  Delete this schedule entirely, including past and future
-                  schedule.
-                </p>
-              </div>
-            </Label>
-          </RadioGroup>
-        </DialogPanel>
+        {repeat !== "once" && (
+          <DialogPanel>
+            <RadioGroup
+              onValueChange={handleChange}
+              value={deleteType}
+            >
+              <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                <Radio
+                  id="only"
+                  value="only"
+                />
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="only">Only for this date</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Delete this schedule only for the selected date
+                  </p>
+                </div>
+              </Label>
+              <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                <Radio
+                  id="afterward"
+                  value="afterward"
+                />
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="afterward">This date and after</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Delete this schedule for the selected date and after
+                  </p>
+                </div>
+              </Label>
+              <Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
+                <Radio
+                  id="all"
+                  value="all"
+                />
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="all">Every schedule</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Delete this schedule entirely, including past and future
+                    schedule.
+                  </p>
+                </div>
+              </Label>
+            </RadioGroup>
+          </DialogPanel>
+        )}
         <DialogFooter>
           <DialogClose render={<Button />}>Cancel</DialogClose>
           <DialogClose
