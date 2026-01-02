@@ -167,7 +167,7 @@ const ScheduleEditButton = ({
   );
 
   const { data: sounds } = useQuery({
-    ...services.sound.query.getProfiles,
+    ...services.sound.query.getSounds,
     select: (sounds) => [
       { label: "Default", value: null },
       ...sounds.map((s) => ({ label: s.name, value: String(s.id) })),

@@ -12,4 +12,16 @@ export class SoundRepository extends FeatureRepository<"sounds"> {
   public insert(value: Insertable<Sounds>) {
     return this.db.insertInto(this.table).values(value).returning("id");
   }
+
+  public update(id: number, value: Partial<Insertable<Sounds>>) {
+    return this.db
+      .updateTable(this.table)
+      .set(value)
+      .where("id", "=", id)
+      .returning("id");
+  }
+
+  public delete(id: number) {
+    return this.db.deleteFrom(this.table).where("id", "=", id).returning("id");
+  }
 }

@@ -21,7 +21,7 @@ export const formatDate = (date: Date) => {
 export const minutesToTime = (minutes: number | undefined | null) => {
   if (minutes === undefined || minutes === null) return "";
   const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+  const m = Math.floor(minutes % 60);
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 };
 

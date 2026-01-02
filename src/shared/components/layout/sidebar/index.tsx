@@ -22,6 +22,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   TimerIcon,
+  Volume2Icon,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useLocation } from "react-router";
@@ -30,8 +31,7 @@ import { SidebarContext, useSidebar } from "./context";
 const MENUS = [
   { label: "Schedules", to: "/", icon: <TimerIcon /> },
   { label: "Profiles", to: "/profiles", icon: <CalendarIcon /> },
-  // TODO: implement a sound page
-  // { label: "Sounds", to: "/sounds", icon: <Volume2Icon /> },
+  { label: "Sounds", to: "/sounds", icon: <Volume2Icon /> },
 ];
 
 interface SidebarItemProps {

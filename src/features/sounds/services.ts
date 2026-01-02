@@ -22,9 +22,28 @@ export class SoundServices extends FeatureServices<SoundRepository> {
     }
   };
 
+  private updateSound = async ({
+    id,
+    ...values
+  }: Partial<Insertable<Sounds>> & { id: number }) => {
+    try {
+      return await this.repository.update(id, values).executeTakeFirstOrThrow();
+    } catch (e) {
+      return handleThrowError(e);
+    }
+  };
+
+  private deleteSound = async (id: number) => {
+    try {
+      return await this.repository.delete(id).executeTakeFirstOrThrow();
+    } catch (e) {
+      return handleThrowError(e);
+    }
+  };
+
   get query() {
     return {
-      getProfiles: queryOptions({
+      getSounds: queryOptions({
         queryKey: ["sounds"],
         queryFn: this.getSounds,
       }),
@@ -33,9 +52,17 @@ export class SoundServices extends FeatureServices<SoundRepository> {
 
   get mutation() {
     return {
-      insertProfile: mutationOptions({
+      createSound: mutationOptions({
         mutationKey: ["create-sound"],
         mutationFn: this.createSound,
+      }),
+      updateSound: mutationOptions({
+        mutationKey: ["update-sound"],
+        mutationFn: this.updateSound,
+      }),
+      deleteSound: mutationOptions({
+        mutationKey: ["delete-sound"],
+        mutationFn: this.deleteSound,
       }),
     };
   }

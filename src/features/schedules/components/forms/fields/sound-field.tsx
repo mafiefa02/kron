@@ -18,7 +18,7 @@ interface SoundFieldProps {
 export const SoundField = ({ label }: SoundFieldProps) => {
   const field = scheduleFormContext.useFieldContext<number | null>();
   const { data, isPending, isError, error } = useQuery({
-    ...services.sound.query.getProfiles,
+    ...services.sound.query.getSounds,
     select: (sounds) => [
       { label: "Default", value: null },
       ...sounds.map((sound) => ({
