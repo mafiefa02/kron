@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Kron",
+  "productName": "Genta",
   "version": "0.1.0",
-  "identifier": "com.mafiefa.kron",
+  "identifier": "com.mafiefa.genta",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -44,7 +44,7 @@
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:kron.db"]
+      "preload": ["sqlite:genta.db"]
     }
   }
 }

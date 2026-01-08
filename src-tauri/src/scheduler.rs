@@ -30,7 +30,7 @@ pub fn start_scheduler(app: &tauri::AppHandle) {
         .expect("failed to get resource dir");
 
     let context = Arc::new(SchedulerContext {
-        db_pool: block_on_db_connect(app_config_dir.join("kron.db")),
+        db_pool: block_on_db_connect(app_config_dir.join("genta.db")),
         config_path: app_config_dir.join("config.json"),
         default_sound_path: resource_dir.join("resources").join("default_sound.wav"),
     });

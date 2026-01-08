@@ -82,6 +82,6 @@ export interface DatabaseTables {
 export const db = new Kysely<DatabaseTables>({
   dialect: new TauriSqliteDialect({
     database: async (prefix) =>
-      Database.load(`${prefix}${await appDataDir()}/kron.db`),
+      Database.load(`${prefix}${await appDataDir()}/genta.db`),
   }),
 });

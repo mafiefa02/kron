@@ -1,5 +1,5 @@
 import { cn } from "@shared/lib/utils";
-import { TimerIcon } from "lucide-react";
+import { BellBrand } from "./illustrations/bell-brand";
 
 interface BrandTextProps extends React.ComponentProps<"p"> {
   withIcon?: boolean;
@@ -18,8 +18,8 @@ export const BrandText = ({
       )}
       {...props}
     >
-      {withIcon && <TimerIcon className="size-5 stroke-3" />}
-      <span>Kron</span>
+      {withIcon && <BellBrand className="size-5 stroke-3" />}
+      <span>Genta</span>
     </p>
   );
 };

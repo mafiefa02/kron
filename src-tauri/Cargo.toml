@@ -1,5 +1,5 @@
 [package]
-name = "kron"
+name = "genta"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["Muhammad Afief Abdurrahman"]

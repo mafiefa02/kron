@@ -57,7 +57,7 @@ async fn read_sound_file(file_path: String) -> Result<Vec<u8>, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let db_url = "sqlite:kron.db";
+    let db_url = "sqlite:genta.db";
 
     let migrations = vec![
         Migration {
