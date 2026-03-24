@@ -1,7 +1,6 @@
 import { NoDataIllustration } from "@shared/components/illustrations/no-data";
 import { WarningIllustration } from "@shared/components/illustrations/warning";
 import { Button } from "@shared/components/ui/button";
-import { Calendar } from "@shared/components/ui/calendar";
 import { Card, CardContent } from "@shared/components/ui/card";
 import {
 	Dialog,
@@ -15,12 +14,9 @@ import {
 } from "@shared/components/ui/dialog";
 import {
 	Field,
-	FieldDescription,
 	FieldLabel,
 } from "@shared/components/ui/field";
 import { Input } from "@shared/components/ui/input";
-import { Label } from "@shared/components/ui/label";
-import { Radio, RadioGroup } from "@shared/components/ui/radio-group";
 import {
 	Select,
 	SelectItem,
@@ -28,11 +24,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@shared/components/ui/select";
-import {
-	Popover,
-	PopoverPopup,
-	PopoverTrigger,
-} from "@shared/components/ui/popover";
 import { Separator } from "@shared/components/ui/separator";
 import { Skeleton } from "@shared/components/ui/skeleton";
 import { Schedules } from "@shared/lib/db";
@@ -45,7 +36,7 @@ import {
 	timeToMinutes,
 } from "@shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, getISODay } from "date-fns";
+import { format } from "date-fns";
 import { Selectable } from "kysely";
 import {
 	CalendarIcon,
@@ -197,13 +188,11 @@ const OneTimeListItem = ({
 				<div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
 					<ScheduleEditButton
 						id={id}
-						repeat="once"
 						initialData={{ name, time, soundId }}
 						scheduleDate={scheduleDate}
 					/>
 					<ScheduleDeleteButton
 						id={id}
-						repeat="once"
 						scheduleDate={scheduleDate}
 					/>
 				</div>
@@ -252,13 +241,11 @@ const ScheduleListItem = ({
 				<div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
 					<ScheduleEditButton
 						id={id}
-						repeat={repeat}
 						initialData={{ name, time, soundId }}
 						scheduleDate={scheduleDate}
 					/>
 					<ScheduleDeleteButton
 						id={id}
-						repeat={repeat}
 						scheduleDate={scheduleDate}
 					/>
 				</div>
@@ -269,12 +256,10 @@ const ScheduleListItem = ({
 
 const ScheduleEditButton = ({
 	id,
-	repeat,
 	initialData,
 	scheduleDate,
 }: {
 	id: Selectable<Schedules>["id"];
-	repeat: Selectable<Schedules>["repeat"];
 	initialData: {
 		name: string;
 		time: number;
@@ -289,7 +274,6 @@ const ScheduleEditButton = ({
 		name: initialData.name,
 		time: minutesToTime(initialData.time),
 		soundId: initialData.soundId,
-		skipDates: [] as Date[],
 	});
 
 	const { data: sounds } = useQuery({
@@ -300,11 +284,6 @@ const ScheduleEditButton = ({
 		],
 	});
 
-	const { data: scheduleDays } = useQuery({
-		...services.schedule.query.getScheduleDays(id),
-		enabled: repeat === "weekly",
-	});
-
 	const { mutate } = useMutation(
 		services.schedule.mutation.updateSchedule({
 			id,
@@ -312,43 +291,28 @@ const ScheduleEditButton = ({
 		}),
 	);
 
-	const { mutate: skipMutate } = useMutation(
-		services.schedule.mutation.skipScheduleDates({ id }),
-	);
-
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
-			if (formState.skipDates.length > 0) {
-				skipMutate(
-					formState.skipDates.map((d) => formatDate(d)),
-					{
-						onSuccess: () => {
-							queryClient.invalidateQueries({ queryKey: ["schedules"] });
-						},
+			mutate(
+				{
+					updateType: "all",
+					values: {
+						name: formState.name,
+						time: timeToMinutes(formState.time) || 0,
+						sound_id: formState.soundId,
+						is_cancelled: false,
 					},
-				);
-			} else {
-				mutate(
-					{
-						updateType: "all",
-						values: {
-							name: formState.name,
-							time: timeToMinutes(formState.time) || 0,
-							sound_id: formState.soundId,
-							is_cancelled: false,
-						},
+				},
+				{
+					onSuccess: () => {
+						queryClient.invalidateQueries({ queryKey: ["schedules"] });
 					},
-					{
-						onSuccess: () => {
-							queryClient.invalidateQueries({ queryKey: ["schedules"] });
-						},
-					},
-				);
-			}
+				},
+			);
 			setOpen(false);
 		},
-		[mutate, skipMutate, formState, queryClient],
+		[mutate, formState, queryClient],
 	);
 
 	return (
@@ -420,51 +384,6 @@ const ScheduleEditButton = ({
 								</SelectPopup>
 							</Select>
 						</Field>
-						{repeat === "weekly" && (
-							<Field>
-								<FieldLabel>Skip dates</FieldLabel>
-								<div className="flex flex-col gap-2 w-full">
-									<Popover modal>
-										<PopoverTrigger
-											render={
-												<Button
-													variant="outline"
-													type="button"
-													className="w-full justify-start"
-												/>
-											}
-										>
-											<CalendarIcon className="size-4" />
-											{formState.skipDates.length === 0
-												? "Skip dates..."
-												: formState.skipDates
-														.sort((a, b) => a.getTime() - b.getTime())
-														.map((d) => format(d, "MMM d"))
-														.join(", ")}
-										</PopoverTrigger>
-										<PopoverPopup align="start" side="top">
-											<Calendar
-												className="bg-popover p-0"
-												mode="multiple"
-												selected={formState.skipDates}
-												onSelect={(dates) =>
-													setFormState((prev) => ({
-														...prev,
-														skipDates: dates ?? [],
-													}))
-												}
-												disabled={(date) =>
-													!scheduleDays?.includes(getISODay(date))
-												}
-											/>
-										</PopoverPopup>
-									</Popover>
-								</div>
-								<FieldDescription>
-									Select dates to skip this schedule from playing.
-								</FieldDescription>
-							</Field>
-						)}
 					</DialogPanel>
 					<DialogFooter>
 						<Button
@@ -484,38 +403,19 @@ const ScheduleEditButton = ({
 
 const ScheduleDeleteButton = ({
 	id,
-	repeat,
 	scheduleDate,
 }: {
 	id: Selectable<Schedules>["id"];
-	repeat: Selectable<Schedules>["repeat"];
 	scheduleDate: Date;
 }) => {
 	const [open, setOpen] = useState(false);
 	const queryClient = useQueryClient();
-
-	const [deleteType, setDeleteType] = useState<"only" | "all" | "afterward">(
-		"all",
-	);
 
 	const { mutate } = useMutation(
 		services.schedule.mutation.deleteSchedule({
 			id,
 			date: format(scheduleDate, "yyyy-MM-dd"),
 		}),
-	);
-
-	const handleSubmit = useCallback(
-		(e: React.FormEvent) => {
-			e.preventDefault();
-			mutate(repeat === "once" ? "all" : deleteType, {
-				onSuccess: () => {
-					queryClient.invalidateQueries({ queryKey: ["schedules"] });
-				},
-			});
-			setOpen(false);
-		},
-		[mutate, repeat, deleteType, queryClient],
 	);
 
 	return (
@@ -526,61 +426,30 @@ const ScheduleDeleteButton = ({
 				<TrashIcon />
 			</DialogTrigger>
 			<DialogPopup>
-				<form onSubmit={handleSubmit} className="contents">
-					<DialogHeader>
-						<DialogTitle>Are you sure?</DialogTitle>
-						<DialogDescription>
-							You are about to delete this schedule.
-						</DialogDescription>
-					</DialogHeader>
-					{repeat !== "once" && (
-						<DialogPanel>
-							<RadioGroup
-								onValueChange={(v) =>
-									setDeleteType(v as "only" | "all" | "afterward")
-								}
-								value={deleteType}
-							>
-								<Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-									<Radio id="only" value="only" />
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="only">Only for this date</Label>
-										<p className="text-xs text-muted-foreground">
-											Delete this schedule only for the selected date
-										</p>
-									</div>
-								</Label>
-								<Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-									<Radio id="afterward" value="afterward" />
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="afterward">This date and after</Label>
-										<p className="text-xs text-muted-foreground">
-											Delete this schedule for the selected date and after
-										</p>
-									</div>
-								</Label>
-								<Label className="flex items-start gap-2 rounded-lg border p-3 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50">
-									<Radio id="all" value="all" />
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="all">Every schedule</Label>
-										<p className="text-xs text-muted-foreground">
-											Delete this schedule entirely, including past and future
-											schedule.
-										</p>
-									</div>
-								</Label>
-							</RadioGroup>
-						</DialogPanel>
-					)}
-					<DialogFooter>
-						<Button type="button" onClick={() => setOpen(false)}>
-							Cancel
-						</Button>
-						<Button type="submit" variant="destructive">
-							Delete
-						</Button>
-					</DialogFooter>
-				</form>
+				<DialogHeader>
+					<DialogTitle>Are you sure?</DialogTitle>
+					<DialogDescription>
+						This will permanently delete this schedule.
+					</DialogDescription>
+				</DialogHeader>
+				<DialogFooter>
+					<Button variant="ghost" onClick={() => setOpen(false)}>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={() => {
+							mutate("all", {
+								onSuccess: () => {
+									queryClient.invalidateQueries({ queryKey: ["schedules"] });
+								},
+							});
+							setOpen(false);
+						}}
+					>
+						Delete
+					</Button>
+				</DialogFooter>
 			</DialogPopup>
 		</Dialog>
 	);

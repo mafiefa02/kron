@@ -43,7 +43,6 @@ export const AddNewScheduleButton = (props: ButtonProps) => {
           sound_id: value.sound,
           start_date: formatDate(value.startDate),
           time: value.time,
-          end_date: value.endDate ? formatDate(value.endDate) : undefined,
           repeat: value.repeat,
           days: value.days,
         },

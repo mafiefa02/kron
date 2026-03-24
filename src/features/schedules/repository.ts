@@ -1,7 +1,6 @@
 import { FeatureRepository } from "@models/repository";
 import { ScheduleOverrides, Schedules } from "@shared/lib/db";
-import { formatDate, parseDate } from "@shared/lib/utils";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { Insertable, Selectable, sql } from "kysely";
 
 export class ScheduleRepository extends FeatureRepository<"schedules"> {
@@ -49,11 +48,6 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
       .where("schedules.profile_id", "=", params.profileId)
       .where("schedules.is_active", "=", 1)
       .where("schedules.start_date", "<=", params.date)
-      .where(
-        sql`COALESCE(schedules.end_date, ${params.date})`,
-        ">=",
-        params.date,
-      )
       .where(sql`COALESCE(schedule_overrides.is_cancelled, 0)`, "=", 0)
       .where(
         sql`COALESCE(schedule_overrides.new_date, ${params.date})`,
@@ -145,7 +139,7 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
   public update(params: {
     id: Selectable<Schedules>["id"];
     profileId: Selectable<Schedules>["profile_id"];
-    updateType: "only" | "afterward" | "all";
+    updateType: "only" | "all";
     date: Selectable<ScheduleOverrides>["original_date"];
     values: {
       name: string;
@@ -177,91 +171,6 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
         .executeTakeFirstOrThrow();
     }
 
-    if (params.updateType === "afterward") {
-      return this.db.transaction().execute(async (trx) => {
-        const original = await trx
-          .selectFrom("schedules")
-          .select(["repeat", "time"])
-          .where("id", "=", params.id)
-          .executeTakeFirstOrThrow();
-
-        await trx
-          .deleteFrom("schedule_overrides")
-          .where("schedule_id", "=", params.id)
-          .where("original_date", "=", params.date)
-          .execute();
-
-        await trx
-          .deleteFrom("schedules")
-          .where("profile_id", "=", params.profileId)
-          .where("start_date", ">=", params.date)
-          .where("time", "=", original.time)
-          .where("id", "!=", params.id)
-          .execute();
-
-        const prevDay = subDays(parseDate(params.date), 1);
-        const endDate = formatDate(prevDay);
-        await trx
-          .updateTable(this.table)
-          .set({ end_date: endDate })
-          .where((eb) =>
-            eb.and([
-              eb("id", "=", params.id),
-              eb("profile_id", "=", params.profileId),
-            ]),
-          )
-          .execute();
-
-        if (!params.values.is_cancelled) {
-          const newSchedule = await trx
-            .insertInto("schedules")
-            .columns([
-              "profile_id",
-              "name",
-              "time",
-              "sound_id",
-              "repeat",
-              "start_date",
-              "is_active",
-            ])
-            .expression(
-              trx
-                .selectFrom("schedules")
-                .select([
-                  "profile_id",
-                  sql.val(params.values.name).as("name"),
-                  sql.val(params.values.time).as("time"),
-                  sql.val(params.values.sound_id).as("sound_id"),
-                  "repeat",
-                  sql.val(params.date).as("start_date"),
-                  sql.lit(1).as("is_active"),
-                ])
-                .where("id", "=", params.id),
-            )
-            .returning("id")
-            .executeTakeFirstOrThrow();
-
-          if (original.repeat === "weekly") {
-            await trx
-              .insertInto("schedule_days")
-              .columns(["schedule_id", "day_of_week"])
-              .expression(
-                trx
-                  .selectFrom("schedule_days")
-                  .select([
-                    sql.val(newSchedule.id).as("schedule_id"),
-                    "day_of_week",
-                  ])
-                  .where("schedule_id", "=", params.id),
-              )
-              .execute();
-          }
-          return newSchedule;
-        }
-        return { id: params.id };
-      });
-    }
-
     return this.db
       .updateTable(this.table)
       .set({
@@ -287,34 +196,10 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
       .where("schedule_id", "=", scheduleId);
   }
 
-  public skipDates(params: {
-    id: Selectable<Schedules>["id"];
-    dates: string[];
-  }) {
-    return this.db.transaction().execute(async (trx) => {
-      for (const date of params.dates) {
-        await trx
-          .insertInto("schedule_overrides")
-          .values({
-            schedule_id: params.id,
-            original_date: date,
-            is_cancelled: 1,
-          })
-          .onConflict((oc) =>
-            oc
-              .columns(["schedule_id", "original_date"])
-              .doUpdateSet({ is_cancelled: 1 }),
-          )
-          .execute();
-      }
-      return { id: params.id };
-    });
-  }
-
   public delete(params: {
     id: Selectable<Schedules>["id"];
     profileId: Selectable<Schedules>["profile_id"];
-    deleteType: "only" | "afterward" | "all";
+    deleteType: "only" | "all";
     date: Selectable<ScheduleOverrides>["original_date"];
   }) {
     if (params.deleteType === "only") {
@@ -326,22 +211,6 @@ export class ScheduleRepository extends FeatureRepository<"schedules"> {
           is_cancelled: 1,
         })
         .returning("schedule_id")
-        .executeTakeFirstOrThrow();
-    }
-
-    if (params.deleteType === "afterward") {
-      const prevDay = subDays(parseDate(params.date), 1);
-      const endDate = formatDate(prevDay);
-      return this.db
-        .updateTable(this.table)
-        .set({ end_date: endDate })
-        .where((eb) =>
-          eb.and([
-            eb("id", "=", params.id),
-            eb("profile_id", "=", params.profileId),
-          ]),
-        )
-        .returning("id")
         .executeTakeFirstOrThrow();
     }
 

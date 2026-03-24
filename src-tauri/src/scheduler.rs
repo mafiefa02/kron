@@ -207,8 +207,8 @@ async fn check_schedules(
             AND (
                 (s.repeat = 'once' AND s.start_date = ?4)
                 OR
-                (s.repeat = 'weekly' AND s.start_date <= ?5 AND (s.end_date IS NULL OR s.end_date >= ?6)
-                 AND EXISTS (SELECT 1 FROM schedule_days sd WHERE sd.schedule_id = s.id AND sd.day_of_week = ?7))
+                (s.repeat = 'weekly' AND s.start_date <= ?5
+                 AND EXISTS (SELECT 1 FROM schedule_days sd WHERE sd.schedule_id = s.id AND sd.day_of_week = ?6))
             )
     "#;
 
@@ -218,8 +218,7 @@ async fn check_schedules(
         .bind(current_minutes) // 3. time
         .bind(&today_str) // 4. once date
         .bind(&today_str) // 5. weekly start
-        .bind(&today_str) // 6. weekly end
-        .bind(day_of_week) // 7. day of week
+        .bind(day_of_week) // 6. day of week
         .fetch_all(pool)
         .await?;
 
