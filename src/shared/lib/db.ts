@@ -40,7 +40,6 @@ export interface Schedules {
   name: string;
   time: number; // Minutes from midnight
   start_date: string; // YYYY-MM-DD
-  end_date: string | null; // YYYY-MM-DD
   repeat: Generated<"once" | "weekly">;
   is_active: Generated<number>; // 0 or 1
   created_at: Generated<string>;

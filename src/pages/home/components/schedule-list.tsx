@@ -485,6 +485,7 @@ const ScheduleDeleteButton = ({
 	id: Selectable<Schedules>["id"];
 	scheduleDate: Date;
 }) => {
+	const [open, setOpen] = useState(false);
 	const queryClient = useQueryClient();
 
 	const { mutate } = useMutation(
@@ -495,19 +496,39 @@ const ScheduleDeleteButton = ({
 	);
 
 	return (
-		<Button
-			variant="destructive-outline"
-			size="icon"
-			onClick={() =>
-				mutate("all", {
-					onSuccess: () => {
-						queryClient.invalidateQueries({ queryKey: ["schedules"] });
-					},
-				})
-			}
-		>
-			<TrashIcon />
-		</Button>
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger
+				render={<Button variant="destructive-outline" size="icon" />}
+			>
+				<TrashIcon />
+			</DialogTrigger>
+			<DialogPopup>
+				<DialogHeader>
+					<DialogTitle>Are you sure?</DialogTitle>
+					<DialogDescription>
+						This will permanently delete this schedule.
+					</DialogDescription>
+				</DialogHeader>
+				<DialogFooter>
+					<Button variant="ghost" onClick={() => setOpen(false)}>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={() => {
+							mutate("all", {
+								onSuccess: () => {
+									queryClient.invalidateQueries({ queryKey: ["schedules"] });
+								},
+							});
+							setOpen(false);
+						}}
+					>
+						Delete
+					</Button>
+				</DialogFooter>
+			</DialogPopup>
+		</Dialog>
 	);
 };
 

@@ -14,10 +14,6 @@ export const schema = z
     startDate: z
       .date({ error: "Start date is required!" })
       .nonoptional({ error: "Start date is required!" }),
-    endDate: z
-      .date({ error: "End date is required!" })
-      .min(new Date(), { error: "End date can't be earlier than today!" })
-      .nullable(),
     time: z
       .number({ error: "Time format is invalid!" })
       .positive({ error: "Please provide a valid time!" })
@@ -32,11 +28,6 @@ export const schema = z
     repeat: repeatType.nonoptional({ error: "Please provide a repeat type!" }),
     sound: z.number({ error: "Sound is invalid!" }).nullable(),
   })
-  .refine((v) => (v.endDate ? v.endDate >= v.startDate : true), {
-    error: "End date has to be later than start date!",
-    path: ["endDate"],
-    abort: true,
-  })
   .refine((v) => (v.repeat === "weekly" ? v.days.length >= 1 : true), {
     error: "Please select at least one repeat day!",
     path: ["days"],
@@ -49,7 +40,6 @@ export const scheduleFormOpts = formOptions({
   defaultValues: {
     name: "",
     startDate: getNextOccurrence(defaultDays),
-    endDate: null as Date | null,
     time: timeToMinutes(format(new Date(), "HH:mm")) as number,
     repeat: "weekly" as z.infer<typeof repeatType>,
     days: defaultDays,
