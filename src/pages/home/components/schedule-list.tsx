@@ -188,7 +188,6 @@ const OneTimeListItem = ({
 				<div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
 					<ScheduleEditButton
 						id={id}
-						repeat="once"
 						initialData={{ name, time, soundId }}
 						scheduleDate={scheduleDate}
 					/>
@@ -242,7 +241,6 @@ const ScheduleListItem = ({
 				<div className="absolute right-0 hidden h-full items-center gap-3 bg-card mask-[linear-gradient(to_right,transparent,theme(--color-card)_2rem)] pr-4 pl-10 group-hover:flex [&_svg]:size-4!">
 					<ScheduleEditButton
 						id={id}
-						repeat={repeat}
 						initialData={{ name, time, soundId }}
 						scheduleDate={scheduleDate}
 					/>
@@ -258,12 +256,10 @@ const ScheduleListItem = ({
 
 const ScheduleEditButton = ({
 	id,
-	repeat,
 	initialData,
 	scheduleDate,
 }: {
 	id: Selectable<Schedules>["id"];
-	repeat: Selectable<Schedules>["repeat"];
 	initialData: {
 		name: string;
 		time: number;
