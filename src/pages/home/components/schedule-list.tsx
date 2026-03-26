@@ -257,6 +257,11 @@ const ScheduleListItem = ({
 	);
 };
 
+const selectSounds = (sounds: { id: number; name: string }[]) => [
+	{ label: "Default", value: null },
+	...sounds.map((s) => ({ label: s.name, value: String(s.id) })),
+];
+
 const ScheduleEditButton = ({
 	id,
 	initialData,
@@ -273,6 +278,42 @@ const ScheduleEditButton = ({
 	scheduleDate: Date;
 }) => {
 	const [open, setOpen] = useState(false);
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger render={<Button variant="outline" size="icon" />}>
+				<EditIcon />
+			</DialogTrigger>
+			<DialogPopup>
+				<ScheduleEditForm
+					id={id}
+					initialData={initialData}
+					repeat={repeat}
+					scheduleDate={scheduleDate}
+					onClose={() => setOpen(false)}
+				/>
+			</DialogPopup>
+		</Dialog>
+	);
+};
+
+const ScheduleEditForm = ({
+	id,
+	initialData,
+	repeat,
+	scheduleDate,
+	onClose,
+}: {
+	id: Selectable<Schedules>["id"];
+	initialData: {
+		name: string;
+		time: number;
+		soundId: number | null;
+	};
+	repeat?: Selectable<Schedules>["repeat"];
+	scheduleDate: Date;
+	onClose: () => void;
+}) => {
 	const queryClient = useQueryClient();
 	const businessDays = useBusinessDays();
 
@@ -296,10 +337,7 @@ const ScheduleEditButton = ({
 
 	const { data: sounds } = useQuery({
 		...services.sound.query.getSounds,
-		select: (sounds) => [
-			{ label: "Default", value: null },
-			...sounds.map((s) => ({ label: s.name, value: String(s.id) })),
-		],
+		select: selectSounds,
 	});
 
 	const { mutate } = useMutation(
@@ -332,9 +370,9 @@ const ScheduleEditButton = ({
 					},
 				},
 			);
-			setOpen(false);
+			onClose();
 		},
-		[mutate, formState, queryClient, repeat, id],
+		[mutate, formState, queryClient, repeat, id, onClose],
 	);
 
 	const handleToggleDay = useCallback((day: number) => {
@@ -348,113 +386,106 @@ const ScheduleEditButton = ({
 	}, []);
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger render={<Button variant="outline" size="icon" />}>
-				<EditIcon />
-			</DialogTrigger>
-			<DialogPopup>
-				<form onSubmit={handleSubmit} className="contents">
-					<DialogHeader>
-						<DialogTitle>Edit Schedule</DialogTitle>
-						<DialogDescription>
-							Make changes to the schedule&apos;s information.
-						</DialogDescription>
-					</DialogHeader>
-					<DialogPanel className="grid gap-4">
-						<Field>
-							<FieldLabel>Name</FieldLabel>
-							<Input
-								value={formState.name}
-								onChange={(e) =>
-									setFormState((prev) => ({ ...prev, name: e.target.value }))
-								}
-							/>
-						</Field>
-						<Field>
-							<FieldLabel>Time</FieldLabel>
-							<Input
-								type="time"
-								value={formState.time}
-								onChange={(e) =>
-									setFormState((prev) => ({ ...prev, time: e.target.value }))
-								}
-							/>
-						</Field>
-						{repeat === "weekly" && (
-							<Field>
-								<FieldLabel>Days</FieldLabel>
-								<div className="flex w-full items-center gap-1">
-									{businessDays.map((day) => {
-										const isActive = formState.days.includes(day);
-										return (
-											<Button
-												key={day}
-												type="button"
-												variant={isActive ? "default" : "outline"}
-												size="sm"
-												className={cn(
-													"flex-1",
-													!isActive && "text-muted-foreground",
-												)}
-												onClick={() => handleToggleDay(day)}
-											>
-												{ISO_DAY_LABELS[day]}
-											</Button>
-										);
-									})}
-								</div>
-							</Field>
-						)}
-						<Field>
-							<FieldLabel>Sound</FieldLabel>
-							<Select
-								value={
-									formState.soundId === null
-										? "null"
-										: String(formState.soundId)
-								}
-								onValueChange={(val) =>
-									setFormState((prev) => ({
-										...prev,
-										soundId: val === "null" ? null : Number(val),
-									}))
-								}
-								items={
-									sounds?.map((s) => ({
-										...s,
-										value: s.value === null ? "null" : s.value,
-									})) ?? []
-								}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectPopup>
-									{sounds?.map((sound) => (
-										<SelectItem
-											key={sound.value ?? "null"}
-											value={sound.value ?? "null"}
-										>
-											{sound.label}
-										</SelectItem>
-									))}
-								</SelectPopup>
-							</Select>
-						</Field>
-					</DialogPanel>
-					<DialogFooter>
-						<Button
-							type="button"
-							variant="ghost"
-							onClick={() => setOpen(false)}
-						>
-							Cancel
-						</Button>
-						<Button type="submit">Save Changes</Button>
-					</DialogFooter>
-				</form>
-			</DialogPopup>
-		</Dialog>
+		<form onSubmit={handleSubmit} className="contents">
+			<DialogHeader>
+				<DialogTitle>Edit Schedule</DialogTitle>
+				<DialogDescription>
+					Make changes to the schedule&apos;s information.
+				</DialogDescription>
+			</DialogHeader>
+			<DialogPanel className="grid gap-4">
+				<Field>
+					<FieldLabel>Name</FieldLabel>
+					<Input
+						value={formState.name}
+						onChange={(e) =>
+							setFormState((prev) => ({ ...prev, name: e.target.value }))
+						}
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Time</FieldLabel>
+					<Input
+						type="time"
+						value={formState.time}
+						onChange={(e) =>
+							setFormState((prev) => ({ ...prev, time: e.target.value }))
+						}
+					/>
+				</Field>
+				{repeat === "weekly" && (
+					<Field>
+						<FieldLabel>Days</FieldLabel>
+						<div className="flex w-full items-center gap-1">
+							{businessDays.map((day) => {
+								const isActive = formState.days.includes(day);
+								return (
+									<Button
+										key={day}
+										type="button"
+										variant={isActive ? "default" : "outline"}
+										size="sm"
+										className={cn(
+											"flex-1",
+											!isActive && "text-muted-foreground",
+										)}
+										onClick={() => handleToggleDay(day)}
+									>
+										{ISO_DAY_LABELS[day]}
+									</Button>
+								);
+							})}
+						</div>
+					</Field>
+				)}
+				<Field>
+					<FieldLabel>Sound</FieldLabel>
+					<Select
+						value={
+							formState.soundId === null
+								? "null"
+								: String(formState.soundId)
+						}
+						onValueChange={(val) =>
+							setFormState((prev) => ({
+								...prev,
+								soundId: val === "null" ? null : Number(val),
+							}))
+						}
+						items={
+							sounds?.map((s) => ({
+								...s,
+								value: s.value === null ? "null" : s.value,
+							})) ?? []
+						}
+					>
+						<SelectTrigger>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectPopup>
+							{sounds?.map((sound) => (
+								<SelectItem
+									key={sound.value ?? "null"}
+									value={sound.value ?? "null"}
+								>
+									{sound.label}
+								</SelectItem>
+							))}
+						</SelectPopup>
+					</Select>
+				</Field>
+			</DialogPanel>
+			<DialogFooter>
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={onClose}
+				>
+					Cancel
+				</Button>
+				<Button type="submit">Save Changes</Button>
+			</DialogFooter>
+		</form>
 	);
 };
 
