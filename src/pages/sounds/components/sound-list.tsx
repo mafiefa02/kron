@@ -260,25 +260,23 @@ const useSoundPlayer = () => {
       const bytes = await invoke<number[]>("read_sound_file", { filePath });
 
       const extension = filePath.split(".").pop()?.toLowerCase();
-      let mimeType = "audio/mpeg"; // Default fallback
-
-      switch (extension) {
-        case "mp3":
-          mimeType = "audio/mpeg";
-          break;
-        case "wav":
-          mimeType = "audio/wav";
-          break;
-        case "ogg":
-          mimeType = "audio/ogg";
-          break;
-        case "m4a":
-          mimeType = "audio/mp4";
-          break;
-        case "aac":
-          mimeType = "audio/aac";
-          break;
-      }
+      const mimeTypes: Record<string, string> = {
+        mp3: "audio/mpeg",
+        wav: "audio/wav",
+        ogg: "audio/ogg",
+        oga: "audio/ogg",
+        flac: "audio/flac",
+        m4a: "audio/mp4",
+        aac: "audio/aac",
+        mp4: "audio/mp4",
+        aiff: "audio/aiff",
+        aif: "audio/aiff",
+        caf: "audio/x-caf",
+        webm: "audio/webm",
+        weba: "audio/webm",
+        mka: "audio/x-matroska",
+      };
+      const mimeType = (extension && mimeTypes[extension]) || "audio/mpeg";
 
       const blob = new Blob([new Uint8Array(bytes)], { type: mimeType });
       const url = URL.createObjectURL(blob);

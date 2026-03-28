@@ -24,7 +24,22 @@ export const AddSoundButton = () => {
       filters: [
         {
           name: "Audio",
-          extensions: ["mp3", "wav", "ogg", "m4a", "aac"],
+          extensions: [
+            "mp3",
+            "wav",
+            "ogg",
+            "oga",
+            "flac",
+            "m4a",
+            "aac",
+            "mp4",
+            "aiff",
+            "aif",
+            "caf",
+            "webm",
+            "weba",
+            "mka",
+          ],
         },
       ],
     });
