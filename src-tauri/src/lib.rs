@@ -72,6 +72,12 @@ pub fn run() {
             sql: include_str!("../db/migrations/0002_add_business_days.sql"),
             kind: tauri_plugin_sql::MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "drop_end_date",
+            sql: include_str!("../db/migrations/0003_drop_end_date.sql"),
+            kind: tauri_plugin_sql::MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
