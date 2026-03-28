@@ -1,6 +1,6 @@
 [package]
 name = "genta"
-version = "0.2.7"
+version = "0.2.8"
 description = "A Tauri App"
 authors = ["Muhammad Afief Abdurrahman"]
 edition = "2021"
